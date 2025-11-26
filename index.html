@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="forest">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Visibility Checker - Free LLM Audit Tool | GreenBanana SEO</title>
+    <meta name="description"
+        content="Discover how your business ranks in ChatGPT, Gemini, Perplexity & Claude compared to competitors. Free AI visibility analysis by GreenBanana SEO.">
+
+    <!-- DaisyUI + Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Custom Forest Theme CSS -->
+    <style>
+        /* Custom Forest Theme Override */
+        [data-theme="forest"] {
+            --color-base-100: oklch(20.84% 0.008 17.911);
+            --color-base-200: oklch(18.522% 0.007 17.911);
+            --color-base-300: oklch(16.203% 0.007 17.911);
+            --color-base-content: oklch(83.768% 0.001 17.911);
+            --color-primary: oklch(68% 0.25 35);
+            --color-primary-content: oklch(98% 0.01 35);
+            --color-secondary: oklch(69.776% 0.135 168.327);
+            --color-secondary-content: oklch(14% 0.005 285.823);
+            --color-accent: oklch(70% 0.25 35);
+            --color-accent-content: oklch(98% 0.01 35);
+            --color-neutral: oklch(62% 0.194 149.214);
+            --color-neutral-content: oklch(12% 0.042 264.695);
+            --color-info: oklch(72.06% 0.191 231.6);
+            --color-info-content: oklch(0% 0 0);
+            --color-success: oklch(64.8% 0.15 160);
+            --color-success-content: oklch(0% 0 0);
+            --color-warning: oklch(84.71% 0.199 83.87);
+            --color-warning-content: oklch(0% 0 0);
+            --color-error: oklch(71.76% 0.221 22.18);
+            --color-error-content: oklch(0% 0 0);
+            --radius-selector: 1rem;
+            --radius-field: 2rem;
+            --radius-box: 1rem;
+            --size-selector: 0.25rem;
+            --size-field: 0.25rem;
+            --border: 1px;
+            --depth: 0;
+            --noise: 0;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #1a202c 100%);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px oklch(68.628% 0.185 148.958 / 0.2);
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        /* Enhanced forest theme styling */
+        .forest-glow {
+            box-shadow: 0 0 20px oklch(68.628% 0.185 148.958 / 0.3);
+        }
+
+        .forest-border {
+            border: 1px solid oklch(68.628% 0.185 148.958 / 0.3);
+        }
+
+        .forest-text-glow {
+            text-shadow: 0 0 10px oklch(68.628% 0.185 148.958 / 0.5);
+        }
+
+        /* Subtle Loading Animations */
+        .subtle-glow {
+            text-shadow:
+                0 0 3px #00ff00,
+                0 0 6px #00ff00;
+            animation: subtle-pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes subtle-pulse {
+
+            0%,
+            100% {
+                opacity: 0.8;
+                text-shadow:
+                    0 0 3px #00ff00,
+                    0 0 6px #00ff00;
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow:
+                    0 0 5px #00ff00,
+                    0 0 10px #00ff00,
+                    0 0 15px #00ff00;
+            }
+        }
+
+        .step-item {
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            color: #10b981;
+        }
+
+        .step-item.active span {
+            color: #10b981;
+            animation: pulse-green 1s infinite;
+        }
+
+        .step-item.completed span {
+            color: #10b981;
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        #matrix-canvas {
+            opacity: 0.3;
+        }
+
+        /* Custom button styling for forest theme */
+        .btn-primary {
+            background: linear-gradient(135deg, oklch(68.628% 0.185 148.958) 0%, oklch(69.776% 0.135 168.327) 100%);
+            border: none;
+            color: oklch(83.768% 0.001 17.911);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, oklch(70.628% 0.185 148.958) 0%, oklch(71.776% 0.135 168.327) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px oklch(68.628% 0.185 148.958 / 0.4);
+        }
+
+        .btn-consultation {
+            color: black !important;
+        }
+
+        .btn-consultation-cta {
+            background: linear-gradient(135deg, #ff4500 0%, #ff6b35 100%) !important;
+            border: 3px solid #fff !important;
+            color: black !important;
+            font-weight: bold !important;
+            font-size: 1.2rem !important;
+            padding: 1rem 2rem !important;
+            box-shadow: 0 8px 25px rgba(255, 69, 0, 0.4) !important;
+            transform: scale(1.05) !important;
+            animation: pulse-glow 2s infinite !important;
+        }
+
+        .btn-consultation-cta:hover {
+            background: linear-gradient(135deg, #e63e00 0%, #ff4500 100%) !important;
+            transform: scale(1.1) translateY(-3px) !important;
+            box-shadow: 0 12px 35px rgba(255, 69, 0, 0.6) !important;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 25px rgba(255, 69, 0, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 8px 35px rgba(255, 69, 0, 0.7);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <div class="navbar bg-base-100 shadow-lg">
+        <div class="navbar-start">
+            <div class="dropdown">
+                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h8m-8 6h16"></path>
+                    </svg>
+                </div>
+            </div>
+            <a class="btn btn-ghost text-xl font-bold text-white">
+                <img src="greenbanana-logo.png" alt="GreenBanana SEO" class="w-10 h-10 mr-2">
+                GreenBanana SEO
+            </a>
+        </div>
+        <div class="navbar-end">
+            <a href="https://calendly.com/kroy/strategyboostwithkevin/" target="_blank"
+                class="btn btn-primary btn-consultation">
+                <i class="fas fa-calendar-alt"></i>
+                Book Consultation
+            </a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero min-h-screen hero-gradient">
+        <div class="hero-content text-center text-white px-4">
+            <div class="max-w-4xl">
+                <!-- Logo -->
+                <div class="mb-6 md:mb-8">
+                    <img src="greenbanana-logo.png" alt="GreenBanana SEO"
+                        class="w-20 md:w-32 h-20 md:h-32 mx-auto mb-3 md:mb-4 opacity-90">
+                    <div class="text-lg md:text-2xl font-bold text-white">GreenBanana SEO</div>
+                </div>
+
+                <h1 class="text-3xl md:text-5xl font-bold mb-4 md:mb-6 forest-text-glow">
+                    How Visible Is Your Business in
+                    <span style="color: #00B140;">AI Search Results?</span>
+                </h1>
+                <p class="text-base md:text-xl mb-6 md:mb-8 opacity-90">
+                    See exactly how your business ranks in ChatGPT, Gemini, Perplexity & Claude compared to your
+                    competitors.
+                    Get your free AI visibility report in under 60 seconds.
+                </p>
+
+                <!-- Trust Indicators -->
+                <div
+                    class="flex flex-wrap justify-center items-center gap-3 md:gap-8 mb-6 md:mb-8 opacity-80 text-sm md:text-base">
+                    <div class="flex items-center gap-1 md:gap-2">
+                        <i class="fab fa-openai text-lg md:text-2xl"></i>
+                        <span>ChatGPT</span>
+                    </div>
+                    <div class="flex items-center gap-1 md:gap-2">
+                        <i class="fab fa-google text-lg md:text-2xl"></i>
+                        <span>Gemini</span>
+                    </div>
+                    <div class="flex items-center gap-1 md:gap-2">
+                        <i class="fas fa-search text-lg md:text-2xl"></i>
+                        <span>Perplexity</span>
+                    </div>
+                    <div class="flex items-center gap-1 md:gap-2">
+                        <i class="fas fa-robot text-lg md:text-2xl"></i>
+                        <span>Claude</span>
+                    </div>
+                </div>
+
+                <a href="#analyzer" class="btn btn-secondary btn-sm md:btn-lg pulse-animation">
+                    <i class="fas fa-chart-line"></i>
+                    Check My AI Visibility - FREE
+                </a>
+
+                <p class="text-xs md:text-sm mt-3 md:mt-4 opacity-70">
+                    ✓ No credit card required ✓ Results in 60 seconds ✓ Compare vs 3 competitors
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Problem/Solution Section -->
+    <div class="py-12 md:py-20 bg-base-100">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12 md:mb-16">
+                <h2 class="text-2xl md:text-4xl font-bold mb-4 md:mb-6">The New Reality of Business Visibility</h2>
+                <p class="text-base md:text-xl text-base-content/70 max-w-3xl mx-auto">
+                    Over 180 million people use ChatGPT monthly. Millions more use Gemini, Perplexity, and Claude.
+                    When they ask about your industry, does your business get mentioned?
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+                <div>
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-12 h-12 bg-error/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-error text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Your Competitors Are Getting Mentioned</h3>
+                                <p class="text-base-content/70">While you're invisible in AI search results, your
+                                    competitors are being recommended to potential customers every day.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-12 h-12 bg-warning/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-eye-slash text-warning text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">You Don't Know What You Don't Know</h3>
+                                <p class="text-base-content/70">Most businesses have no idea how they appear in AI
+                                    search results or what opportunities they're missing.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="w-12 h-12 bg-info/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-clock text-info text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">The Window Is Closing</h3>
+                                <p class="text-base-content/70">Early movers in AI optimization will dominate their
+                                    industries. The longer you wait, the harder it becomes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <div class="mockup-phone">
+                        <div class="camera"></div>
+                        <div class="display">
+                            <div class="artboard artboard-demo phone-1 bg-gradient-to-br from-primary to-secondary p-6">
+                                <div class="text-white text-center">
+                                    <i class="fas fa-robot text-4xl mb-4"></i>
+                                    <h4 class="font-bold text-lg mb-2">AI Search Query</h4>
+                                    <p class="text-sm opacity-90 mb-4">"Best marketing agency in [city]"</p>
+                                    <div class="space-y-2 text-left">
+                                        <div class="bg-white/20 p-2 rounded text-xs">
+                                            <strong>Competitor A</strong> - Highly recommended...
+                                        </div>
+                                        <div class="bg-white/20 p-2 rounded text-xs">
+                                            <strong>Competitor B</strong> - Great reviews...
+                                        </div>
+                                        <div class="bg-white/10 p-2 rounded text-xs opacity-50">
+                                            <strong>Your Business</strong> - Not mentioned
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="py-12 md:py-20 bg-base-200">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12 md:mb-16">
+                <h2 class="text-2xl md:text-4xl font-bold mb-4 md:mb-6">See Exactly Where You Stand</h2>
+                <p class="text-base md:text-xl text-base-content/70">Get a complete picture of your AI visibility across
+                    all major
+                    platforms</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 md:gap-8">
+                <div class="card bg-base-100 shadow-xl feature-card forest-border">
+                    <div class="card-body text-center">
+                        <div
+                            class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 forest-glow">
+                            <i class="fas fa-chart-bar text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="card-title justify-center mb-4">Multi-Platform Analysis</h3>
+                        <p class="text-base-content/70">
+                            See your rankings across ChatGPT, Gemini, Perplexity, and Claude in one comprehensive
+                            report.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card bg-base-100 shadow-xl feature-card forest-border">
+                    <div class="card-body text-center">
+                        <div
+                            class="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 forest-glow">
+                            <i class="fas fa-users text-secondary text-2xl"></i>
+                        </div>
+                        <h3 class="card-title justify-center mb-4">Competitor Comparison</h3>
+                        <p class="text-base-content/70">
+                            Compare your AI visibility against up to 3 competitors to see exactly where you stand.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card bg-base-100 shadow-xl feature-card forest-border">
+                    <div class="card-body text-center">
+                        <div
+                            class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 forest-glow">
+                            <i class="fas fa-lightbulb text-accent text-2xl"></i>
+                        </div>
+                        <h3 class="card-title justify-center mb-4">Actionable Insights</h3>
+                        <p class="text-base-content/70">
+                            Get specific recommendations on how to improve your AI search visibility and outrank
+                            competitors.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Analyzer Section -->
+    <div id="analyzer" class="py-12 md:py-20 bg-base-100">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <div class="text-center mb-8 md:mb-12">
+                <h2 class="text-2xl md:text-4xl font-bold mb-4 md:mb-6">Get Your Free AI Visibility Report</h2>
+                <p class="text-base md:text-xl text-base-content/70">
+                    Enter your details below and we'll analyze how you rank in AI search results compared to your
+                    competitors
+                </p>
+            </div>
+
+            <!-- Lead Capture Form -->
+            <div class="card bg-base-100 shadow-2xl forest-glow forest-border">
+                <div class="card-body">
+                    <form id="visibility-form" class="space-y-4 md:space-y-6">
+                        <!-- Personal Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-semibold text-sm md:text-base">Full Name *</span>
+                                </label>
+                                <input type="text" id="fullName" name="fullName" placeholder="John Smith"
+                                    class="input input-bordered input-primary input-sm md:input-md" required>
+                            </div>
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-semibold text-sm md:text-base">Email Address *</span>
+                                </label>
+                                <input type="email" id="email" name="email" placeholder="john@company.com"
+                                    class="input input-bordered input-primary input-sm md:input-md" required>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-semibold text-sm md:text-base">Company Name</span>
+                                </label>
+                                <input type="text" id="company" name="company" placeholder="Your Company Inc."
+                                    class="input input-bordered input-sm md:input-md">
+                            </div>
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-semibold text-sm md:text-base">Phone Number</span>
+                                </label>
+                                <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567"
+                                    class="input input-bordered input-sm md:input-md">
+                            </div>
+                        </div>
+
+                        <!-- Website URL -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold text-sm md:text-base">Your Website URL *</span>
+                            </label>
+                            <input type="url" id="website" name="website" placeholder="https://yourwebsite.com"
+                                class="input input-bordered input-primary input-sm md:input-md" required>
+                        </div>
+
+                        <!-- Competitor URLs -->
+                        <div class="space-y-3 md:space-y-4">
+                            <label class="label">
+                                <span class="label-text font-semibold text-sm md:text-base">Competitor Websites (2-3
+                                    recommended)</span>
+                            </label>
+                            <div class="space-y-2 md:space-y-3">
+                                <input type="url" id="competitor1" name="competitor1"
+                                    placeholder="https://competitor1.com"
+                                    class="input input-bordered input-sm md:input-md w-full">
+                                <input type="url" id="competitor2" name="competitor2"
+                                    placeholder="https://competitor2.com"
+                                    class="input input-bordered input-sm md:input-md w-full">
+                                <input type="url" id="competitor3" name="competitor3"
+                                    placeholder="https://competitor3.com"
+                                    class="input input-bordered input-sm md:input-md w-full">
+                            </div>
+                        </div>
+
+                        <!-- Keywords -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold text-sm md:text-base">Target Keywords/Phrases
+                                    *</span>
+                                <span class="label-text-alt text-xs md:text-sm">Separate with commas</span>
+                            </label>
+                            <textarea id="keywords" name="keywords"
+                                placeholder="digital marketing agency, SEO services, web design, social media marketing"
+                                class="textarea textarea-bordered textarea-primary textarea-sm md:textarea-md h-20 md:h-24"
+                                required></textarea>
+                            <label class="label">
+                                <span class="label-text-alt text-xs md:text-sm">Enter 3-5 keywords you want to be found
+                                    for in AI
+                                    search</span>
+                            </label>
+                        </div>
+
+                        <!-- Privacy Consent -->
+                        <div class="form-control">
+                            <label class="cursor-pointer label justify-start gap-2 md:gap-3">
+                                <input type="checkbox" id="consent" name="consent"
+                                    class="checkbox checkbox-primary checkbox-sm md:checkbox-md" required>
+                                <span class="label-text text-xs md:text-sm">
+                                    I agree to receive my AI visibility report and follow-up communications from
+                                    GreenBanana SEO.
+                                    <a href="#" class="link link-primary">Privacy Policy</a>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-control mt-6 md:mt-8">
+                            <button type="submit" class="btn btn-primary btn-sm md:btn-lg">
+                                <i class="fas fa-search"></i>
+                                Analyze My AI Visibility - FREE
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Loading Section -->
+    <div id="loading-section" class="loading-spinner min-h-screen bg-black relative overflow-hidden">
+        <!-- Matrix Rain Background -->
+        <canvas id="matrix-canvas" class="absolute inset-0 w-full h-full"></canvas>
+
+        <!-- Loading Content -->
+        <div class="relative z-10 flex items-center justify-center min-h-screen">
+            <div class="text-center max-w-4xl mx-auto px-4">
+                <!-- AI Terminal Interface -->
+                <div class="bg-black/95 p-12 font-mono text-green-400 shadow-2xl backdrop-blur-sm">
+                    <!-- Terminal Header -->
+                    <div class="text-left mb-8 pb-4">
+                        <div class="text-green-300 text-lg mb-2">AI NEURAL INTERFACE v3.14159</div>
+                        <div class="text-green-400 text-sm mb-1">$ sudo ./ai_visibility_scanner --target=business
+                            --deep-scan</div>
+                        <div class="text-green-400 text-sm mb-1">Initializing LLM processors...</div>
+                        <div class="text-green-400 text-sm mb-1">Establishing secure AI connections...</div>
+                        <div class="text-green-400 text-sm">Neural pathways: ACTIVE</div>
+                    </div>
+
+                    <!-- Main Message -->
+                    <div class="text-center mb-12">
+                        <div class="text-2xl font-light text-green-300 mb-8 tracking-wide subtle-glow">
+                            Analyzing AI visibility across neural networks
+                        </div>
+                        <div class="text-green-400 text-lg mb-6 font-mono">
+                            <span id="matrix-status">SCANNING AI NEURAL NETWORKS...</span>
+                        </div>
+                        <div class="text-green-500 text-sm">
+                            <span class="animate-pulse">●</span>
+                            <span class="animate-pulse" style="animation-delay: 0.5s;">●</span>
+                            <span class="animate-pulse" style="animation-delay: 1s;">●</span>
+                        </div>
+                    </div>
+
+
+
+                    <!-- System Status -->
+                    <div class="grid grid-cols-2 gap-6 text-sm">
+                        <div class="step-item p-3" id="step-1">
+                            <div class="flex items-center justify-between">
+                                <span>CHATGPT_NEURAL.exe</span>
+                                <span class="text-green-600">[ WAITING ]</span>
+                            </div>
+                        </div>
+                        <div class="step-item p-3" id="step-2">
+                            <div class="flex items-center justify-between">
+                                <span>GEMINI_NETWORK.dll</span>
+                                <span class="text-green-600">[ WAITING ]</span>
+                            </div>
+                        </div>
+                        <div class="step-item p-3" id="step-3">
+                            <div class="flex items-center justify-between">
+                                <span>PERPLEXITY_GRID.sys</span>
+                                <span class="text-green-600">[ WAITING ]</span>
+                            </div>
+                        </div>
+                        <div class="step-item p-3" id="step-4">
+                            <div class="flex items-center justify-between">
+                                <span>CLAUDE_SYSTEM.bin</span>
+                                <span class="text-green-600">[ WAITING ]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Operation -->
+                    <div class="mt-8 text-center">
+                        <div class="text-green-400 text-sm">
+                            CURRENT OPERATION: <span id="current-platform" class="text-green-300">INITIALIZING
+                                SYSTEMS...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="results-section py-20 bg-base-100">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-6">Your AI Visibility Report</h2>
+                <p class="text-xl text-base-content/70">Here's how you rank across major AI platforms</p>
+            </div>
+
+            <!-- Results will be populated by JavaScript -->
+            <div id="results-content">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="py-12 md:py-20 bg-primary text-primary-content">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-2xl md:text-4xl font-bold mb-4 md:mb-6">Ready to Dominate AI Search Results?</h2>
+            <p class="text-base md:text-xl mb-6 md:mb-8 opacity-90">
+                Book a free consultation to learn how GreenBanana SEO can improve your AI visibility and drive more
+                qualified leads.
+            </p>
+            <a href="https://calendly.com/kroy/strategyboostwithkevin/" target="_blank"
+                class="btn btn-secondary btn-sm md:btn-lg btn-consultation-cta">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Schedule Free Consultation
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-6 md:p-10 bg-base-200 text-base-content">
+        <aside>
+            <div class="mb-3 md:mb-4">
+                <img src="greenbanana-logo.png" alt="GreenBanana SEO" class="w-12 md:w-16 h-12 md:h-16 mx-auto mb-2">
+                <div class="text-lg md:text-2xl font-bold text-white">GreenBanana SEO</div>
+            </div>
+            <p class="font-semibold text-sm md:text-base">
+                Helping businesses dominate AI search results since 2009
+            </p>
+            <p class="text-xs md:text-sm">Copyright © 2009 - All rights reserved</p>
+        </aside>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+
+</html>

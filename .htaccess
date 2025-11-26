@@ -1,0 +1,31 @@
+# Enable PHP in this directory
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php81 .php .php8 .phtml
+</IfModule>
+
+Options -MultiViews
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /llm-visibility-checker/
+
+  # Serve real files and directories as-is
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule . - [L]
+
+  # Pretty endpoints: /llm-visibility-checker/api/analyze
+  RewriteRule ^api/([a-z-]+)/?$ api.php?endpoint=$1 [QSA,NC,L]
+</IfModule>
+
+
+
+Options -MultiViews
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /llm-visibility-checker/
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule . - [L]
+  RewriteRule ^api/([a-z-]+)/?$ api.php?endpoint=$1 [QSA,NC,L]
+</IfModule>
