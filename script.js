@@ -278,6 +278,13 @@ class LLMVisibilityTool {
     }
   }
 
+  // ---------- domain extraction helper (matches PHP backend) ----------
+  extractDomain(url) {
+    if (!url) return '';
+    let cleaned = url.replace(/^https?:\/\//, '').replace(/^www\./i, '');
+    return cleaned.split('/')[0];
+  }
+
   // ---------- result shaping (from REAL API) ----------
   formatResults(apiResults) {
     const platforms = Object.keys(apiResults.platformResults || {});
@@ -286,10 +293,13 @@ class LLMVisibilityTool {
     const competitorSummary = {};
     const competitors = apiResults.competitors || apiResults.user?.competitors || [];
 
-    // Initialize tracking buckets
+    // Initialize tracking buckets with NORMALIZED DOMAINS (matching backend)
     competitors.forEach(url => {
-      competitorSummary[url] = {
-        url,
+      const domain = this.extractDomain(url);
+      if (!domain) return;
+      competitorSummary[domain] = {
+        url,  // Keep original URL for display
+        domain,
         totalMentions: 0,
         perPlatform: {}
       };
@@ -300,23 +310,33 @@ class LLMVisibilityTool {
       const keywordResults = platform.keywordResults || {};
       for (const [kw, result] of Object.entries(keywordResults)) {
         (result.competitorMentions || []).forEach(c => {
-          if (!competitorSummary[c.domain]) return;
+          const domain = c.domain || this.extractDomain(c.url);
+          if (!domain || !competitorSummary[domain]) return;
           if (c.mentioned) {
-            competitorSummary[c.domain].totalMentions++;
-            competitorSummary[c.domain].perPlatform[platformKey] =
-              (competitorSummary[c.domain].perPlatform[platformKey] || 0) + 1;
+            competitorSummary[domain].totalMentions++;
+            competitorSummary[domain].perPlatform[platformKey] =
+              (competitorSummary[domain].perPlatform[platformKey] || 0) + 1;
           }
         });
       }
     }
 
-    // Convert into frontend-friendly structure
+    // Calculate total possible mentions for proper scoring
+    const keywords = apiResults.keywords || [];
+    const totalKeywords = keywords.length || 1;
+    const totalPlatforms = platforms.length || 1;
+    const maxPossibleMentions = totalKeywords * totalPlatforms;
+
+    // Convert into frontend-friendly structure with proper percentage scoring
     const competitorComparison = Object.values(competitorSummary).map(c => ({
       url: c.url,
       name: c.url.replace(/^https?:\/\//, ''),
       mentions: c.totalMentions,
       platforms: Object.keys(c.perPlatform),
-      score: Math.min(100, c.totalMentions * 10) // deterministic
+      // Score as percentage: (actual mentions / max possible mentions) * 100
+      score: maxPossibleMentions > 0
+        ? Math.round((c.totalMentions / maxPossibleMentions) * 100)
+        : 0
     }));
 
     // ----- RETURN OBJECT -----
