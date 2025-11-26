@@ -1,0 +1,614 @@
+[
+    {
+        "fullName": "Test Person",
+        "email": "testperson@gmail.com",
+        "company": "Test Person Company",
+        "phone": "9089008000",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://bruceclay.com",
+            "https://us.mullenlowe.com/"
+        ],
+        "keywords": [
+            "digital marketing agency",
+            "seo services",
+            "aeo agency"
+        ],
+        "timestamp": "2025-11-10T21:13:46+00:00",
+        "id": 1762809226,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://bruceclay.com",
+            "https://us.mullenlowe.com/"
+        ],
+        "keywords": [
+            "digital marketing services",
+            "SEO agency",
+            "AEO agency"
+        ],
+        "timestamp": "2025-11-10T21:29:05+00:00",
+        "id": 1762810145,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://bruceclay.com",
+            "https://us.mullenlowe.com/"
+        ],
+        "keywords": [
+            "digital marketing services",
+            "seo agency aeo agency"
+        ],
+        "timestamp": "2025-11-10T21:34:44+00:00",
+        "id": 1762810484,
+        "mode": "instant"
+    },
+    {
+        "fullName": "jada smith",
+        "email": "testperson@gmail.com",
+        "company": "Test Person Company",
+        "phone": "9089008000",
+        "website": "https://clearchanneloutdoor.com",
+        "competitors": [
+            "https://outfrontmedia.com",
+            "https://lamar.com/"
+        ],
+        "keywords": [
+            "digital billboards",
+            "OOH Marketing",
+            "out-of-home"
+        ],
+        "timestamp": "2025-11-11T00:11:49+00:00",
+        "id": 1762819909,
+        "mode": "instant"
+    },
+    {
+        "fullName": "James Joyce",
+        "email": "jjoyce@gmail.com",
+        "company": "Uslyses",
+        "phone": "555-897-5678",
+        "website": "https://cnn.com/",
+        "competitors": [
+            "https://nytimes.com/",
+            "https://www.bbc.com/"
+        ],
+        "keywords": [
+            "latest news",
+            "unbiased news",
+            "real news"
+        ],
+        "timestamp": "2025-11-11T02:04:49+00:00",
+        "id": 1762826689,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Tester Person",
+        "email": "testerperson@test.com",
+        "company": "Test Person Company",
+        "phone": "9897899089",
+        "website": "https://webacorp.com/",
+        "competitors": [
+            "https://www.dupont.com/",
+            "https://www.dow.com/en-us.html"
+        ],
+        "keywords": [
+            "low-conductivity additives",
+            "heat transfer liquids",
+            "antifreeze"
+        ],
+        "timestamp": "2025-11-11T02:26:30+00:00",
+        "id": 1762827990,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "analyticsfulcrum@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783386500",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://bruceclay.com",
+            "https://us.mullenlowe.com/"
+        ],
+        "keywords": [
+            "SEO services",
+            "AEO agency",
+            "web design",
+            "social media marketing"
+        ],
+        "timestamp": "2025-11-11T13:44:54+00:00",
+        "id": 1762868694,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Kevin Roy",
+        "email": "kroy@greenbananaseo.com",
+        "company": "Green Banana SEO",
+        "phone": "",
+        "website": "https://www.greenbananaseo.com",
+        "competitors": [
+            "https://www.getfoundquick.com",
+            "https://www.bruceclay.com"
+        ],
+        "keywords": [
+            "pickle"
+        ],
+        "timestamp": "2025-11-11T14:17:06+00:00",
+        "id": 1762870626,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Kevin Roy",
+        "email": "kroy@greenbananaseo.com",
+        "company": "Green Banana SEO",
+        "phone": "6178286203",
+        "website": "https://www.greenbananaseo.com",
+        "competitors": [
+            "https://www.getfoundquick.com",
+            "https://www.bruceclay.com",
+            "https://www.bostonwebmarketing.com"
+        ],
+        "keywords": [
+            "pickles",
+            "beer",
+            "smelly"
+        ],
+        "timestamp": "2025-11-11T14:18:15+00:00",
+        "id": 1762870695,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://us.mullenlowe.com",
+            "https://bruceclay.com"
+        ],
+        "keywords": [
+            "digital marketing agency",
+            "SEO agency",
+            "AEO services",
+            "SEO services"
+        ],
+        "timestamp": "2025-11-17T20:52:08+00:00",
+        "id": 1763412728,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "analyticsfulcrum@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783386500",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://us.mullenlowe.com",
+            "https://bruceclay.com"
+        ],
+        "keywords": [
+            "smelly",
+            "pickles",
+            "beer"
+        ],
+        "timestamp": "2025-11-17T20:54:47+00:00",
+        "id": 1763412887,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mcormier@greenbananaseo.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783386500",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://us.mullenlowe.com",
+            "https://bruceclay.com"
+        ],
+        "keywords": [
+            "smelly",
+            "pickles",
+            "beer"
+        ],
+        "timestamp": "2025-11-17T20:59:58+00:00",
+        "id": 1763413198,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "analyticsfulcrum@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783386500",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://bruceclay.com",
+            "https://us.mullenlowe.com/"
+        ],
+        "keywords": [
+            "smelly",
+            "beer",
+            "pickles"
+        ],
+        "timestamp": "2025-11-17T22:03:16+00:00",
+        "id": 1763416996,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://us.mullenlowe.com",
+            "https://bruceclay.com"
+        ],
+        "keywords": [
+            "digital marketing agency",
+            "SEO agency",
+            "AEO services"
+        ],
+        "timestamp": "2025-11-18T15:18:58+00:00",
+        "id": 1763479138,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://clearchanneloutdoor.com",
+        "competitors": [
+            "https://outfrontmedia.com",
+            "https://lamar.com/"
+        ],
+        "keywords": [
+            "OOH",
+            "billboards",
+            "out-of-home",
+            "digital billboards"
+        ],
+        "timestamp": "2025-11-18T21:20:30+00:00",
+        "id": 1763500830,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://us.mullenlowe.com",
+            "https://bruceclay.com"
+        ],
+        "keywords": [
+            "digital marketing agency",
+            "SEO agency",
+            "AEO agency",
+            "SEO services"
+        ],
+        "timestamp": "2025-11-18T21:32:54+00:00",
+        "id": 1763501574,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "GreenBananaSEO",
+        "phone": "9783170897",
+        "website": "https://greenbananaseo.com",
+        "competitors": [
+            "https://bruceclay.com",
+            "https://us.mullenlowe.com/"
+        ],
+        "keywords": [
+            "SEO services",
+            "digital marketing agency",
+            "web design",
+            "AEO agency"
+        ],
+        "timestamp": "2025-11-18T21:36:41+00:00",
+        "id": 1763501801,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "analyticsfulcrum@gmail.com",
+        "company": "Clear Channel Outdoor",
+        "phone": "",
+        "website": "https://clearchanneloutdoor.com",
+        "competitors": [
+            "https://outfrontmedia.com",
+            "https://lamar.com/"
+        ],
+        "keywords": [
+            "digital billboards",
+            "billboard marketing",
+            "Out-of-Home",
+            "OOH"
+        ],
+        "timestamp": "2025-11-18T21:40:27+00:00",
+        "id": 1763502027,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "cnn",
+        "phone": "9783170897",
+        "website": "https://cnn.com",
+        "competitors": [
+            "https://www.bbc.com/",
+            "https://news.yahoo.com/"
+        ],
+        "keywords": [
+            "news",
+            "reliable news",
+            "real news",
+            "daily news"
+        ],
+        "timestamp": "2025-11-24T15:35:55+00:00",
+        "id": 1763998555,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "cnn",
+        "phone": "9783170897",
+        "website": "https://www.cnn.com/",
+        "competitors": [
+            "https://www.bbc.com/",
+            "https://www.reuters.com/"
+        ],
+        "keywords": [
+            "news",
+            "real news",
+            "reliable truth teller",
+            "digital news"
+        ],
+        "timestamp": "2025-11-24T19:34:03+00:00",
+        "id": 1764012843,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Test Person",
+        "email": "testperson@gmail.com",
+        "company": "BBC News",
+        "phone": "9089008000",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://www.reuters.com/",
+            "https://www.cnn.com/"
+        ],
+        "keywords": [
+            "breaking news",
+            "world news",
+            "latest news",
+            "international news"
+        ],
+        "timestamp": "2025-11-24T19:37:58+00:00",
+        "id": 1764013078,
+        "mode": "instant"
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "BBC News",
+        "phone": "9783170897",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "world news",
+            "latest news",
+            "international news"
+        ],
+        "timestamp": "2025-11-25T13:46:41+00:00",
+        "id": 1764078401,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "BBC News",
+        "phone": "9783170897",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "world news",
+            "latest news",
+            "international news"
+        ],
+        "timestamp": "2025-11-25T14:29:21+00:00",
+        "id": 1764080961,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "analyticsfulcrum@gmail.com",
+        "company": "BBC News",
+        "phone": "9783386500",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "world news",
+            "latest news",
+            "international news"
+        ],
+        "timestamp": "2025-11-25T16:18:57+00:00",
+        "id": 1764087537,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "BBC News",
+        "phone": "9783170897",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "world news",
+            "latest news",
+            "international news"
+        ],
+        "timestamp": "2025-11-25T19:57:53+00:00",
+        "id": 1764100673,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "analyticsfulcrum@gmail.com",
+        "company": "BBC News",
+        "phone": "9897899089",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "world news",
+            "latest news",
+            "international news"
+        ],
+        "timestamp": "2025-11-25T20:06:08+00:00",
+        "id": 1764101168,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Test Person",
+        "email": "testperson@gmail.com",
+        "company": "BBC News",
+        "phone": "9089008000",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "international news",
+            "breaking news",
+            "global news",
+            "national news"
+        ],
+        "timestamp": "2025-11-25T20:19:53+00:00",
+        "id": 1764101993,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky cormier",
+        "email": "mcormier@greenbananaseo.com",
+        "company": "Reuters News",
+        "phone": "8907896778",
+        "website": "https://reuters.com",
+        "competitors": [
+            "https://bbc.co.uk",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "international news",
+            "news agency"
+        ],
+        "timestamp": "2025-11-25T20:23:51+00:00",
+        "id": 1764102231,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "John Smith",
+        "email": "john@thecompany.com",
+        "company": "CNN News",
+        "phone": "(669) 890-9089",
+        "website": "https://cnn.com",
+        "competitors": [
+            "https://bbc.co.uk",
+            "https://reuters.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "international news",
+            "news agency"
+        ],
+        "timestamp": "2025-11-26T04:13:11+00:00",
+        "id": 1764130391,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky Cormier",
+        "email": "mickycorm@gmail.com",
+        "company": "BBC News",
+        "phone": "9783170897",
+        "website": "https://bbc.co.uk",
+        "competitors": [
+            "https://reuters.com",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "international news",
+            "news agency"
+        ],
+        "timestamp": "2025-11-26T13:17:56+00:00",
+        "id": 1764163076,
+        "mode": "instant",
+        "lookbackDays": 5
+    },
+    {
+        "fullName": "Micky cormier",
+        "email": "mcormier@greenbananaseo.com",
+        "company": "Reuters News",
+        "phone": "(678)567-8989",
+        "website": "https://reuters.com",
+        "competitors": [
+            "https://bbc.co.uk",
+            "https://cnn.com"
+        ],
+        "keywords": [
+            "breaking news",
+            "international news",
+            "news agency"
+        ],
+        "timestamp": "2025-11-26T13:21:11+00:00",
+        "id": 1764163271,
+        "mode": "instant",
+        "lookbackDays": 5
+    }
+]
