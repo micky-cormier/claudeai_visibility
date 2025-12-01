@@ -529,15 +529,17 @@ class LLMVisibilityTool {
                     <td>${comp.mentions}</td>
 
                     <td>
-                      ${
-                        (comp.platforms || []).length > 0
-                          ? (comp.platforms || []).map(p => `
-                              <span class="badge badge-sm mr-1 badge-neutral">
-                                ${p.charAt(0).toUpperCase() + p.slice(1)}
-                              </span>
-                            `).join('')
-                          : `<span class="badge badge-sm badge-error">No mentions</span>`
-                      }
+                      <div class="badge ${
+                        comp.score >= 80 ? 'badge-success' :
+                        comp.score >= 60 ? 'badge-info' :
+                        comp.score >= 40 ? 'badge-warning' : 'badge-error'
+                      }">
+                        ${
+                          comp.score >= 80 ? 'Excellent' :
+                          comp.score >= 60 ? 'Strong' :
+                          comp.score >= 40 ? 'Moderate' : 'Weak'
+                        }
+                      </div>
                     </td>
                   </tr>
                 `).join('')}
