@@ -487,14 +487,20 @@ Output ONLY: YES or NO (nothing else).";
             return "
 You must act as a factual lookup system.
 
-Return companies that are *widely recognized* as associated with the keyword below.
+Return companies that are associated with the keyword below.
 Use reliable knowledge and recent information from roughly the last {$days} days where possible.
 
+IMPORTANT - Location-Based Queries:
+- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
+- For location queries, local businesses ARE the correct answer - not just national brands.
+- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+
 Accuracy Rules:
-- DO NOT invent companies or domains.
-- Only include companies strongly or clearly tied to this keyword.
-- Well-known brands and major organizations ARE allowed.
-- If unsure about obscure companies → exclude them.
+- DO NOT invent companies or domains that don't exist.
+- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
+- For GENERAL keywords: Focus on well-known, widely recognized organizations.
+- If a business legitimately operates in the specified location/industry, include it.
+- Only exclude if you have no reliable information about the business existing.
 - It is acceptable to return 0–10 entries.
 - NO commentary. NO explanations.
 
@@ -541,15 +547,22 @@ Return ONLY this exact format:
             return "
 Act as a factual reference system.
 
-Return companies that reputable sources consistently associate with this keyword.
+Return companies that reputable sources associate with this keyword.
 Prefer information from approximately the last {$days} days when available.
 
+IMPORTANT - Location-Based Queries:
+- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
+- For location queries, local businesses ARE the correct answer - not just national brands.
+- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+
 Rules:
-- Do NOT invent or guess companies/domains.
-- Use well-known, widely-recognized entities only.
-- If uncertain → exclude the item.
+- Do NOT invent or guess companies/domains that don't exist.
+- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
+- For GENERAL keywords: Focus on well-known, widely-recognized entities.
+- If a business legitimately operates in the specified location/industry, include it.
+- Only exclude if you have no reliable information about the business existing.
 - Acceptable to return fewer than 10 results.
-- Include the user domain or competitors ONLY if clearly associated.
+- Include the user domain or competitors if they are associated with the keyword.
 - Output MUST be only the list. No commentary.
 
 Keyword: '{$kw}'
@@ -597,13 +610,20 @@ Return format ONLY:
             $prompt = "
 You must act as an accurate, factual lookup system.
 
-Return well-known companies that are broadly recognized as associated with the keyword below.
+Return companies that are associated with the keyword below.
 Use reliable sources and, when possible, recent information from roughly the last {$daysLookback} days.
 
+IMPORTANT - Location-Based Queries:
+- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
+- For location queries, local businesses ARE the correct answer - not just national brands.
+- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+
 Strict rules:
-- NEVER invent new companies or domains.
-- Only include widely-recognized or strongly relevant organizations.
-- Exclude uncertain or obscure entries.
+- NEVER invent new companies or domains that don't exist.
+- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
+- For GENERAL keywords: Focus on well-known, widely-recognized organizations.
+- If a business legitimately operates in the specified location/industry, include it.
+- Only exclude if you have no reliable information about the business existing.
 - OK to return 0–10 results.
 - NO explanations or extra text.
 
@@ -726,14 +746,21 @@ Output ONLY: YES or NO (nothing else).";
             $prompt = "
 Act as a highly reliable factual lookup system.
 
-Return companies that major, trusted sources consistently associate with this keyword.
+Return companies that trusted sources associate with this keyword.
 Prefer recent information from roughly the last {$daysLookback} days where relevant.
+
+IMPORTANT - Location-Based Queries:
+- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
+- For location queries, local businesses ARE the correct answer - not just national brands.
+- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
 
 Rules:
 - No hallucination.
-- No invented domains.
-- Only include companies with strong or well-known relevance.
-- Exclude uncertain, obscure, or weakly-connected entities.
+- No invented domains that don't exist.
+- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
+- For GENERAL keywords: Focus on companies with strong or well-known relevance.
+- If a business legitimately operates in the specified location/industry, include it.
+- Only exclude if you have no reliable information about the business existing.
 - Return 0–10 entries ONLY in this exact format:
 
 1. Company — domain.com
