@@ -485,30 +485,24 @@ Output ONLY: YES or NO (nothing else).";
 
         $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
             return "
-You must act as a factual lookup system.
+A user is asking you: '{$kw}'
 
-Return companies that are associated with the keyword below.
-Use reliable knowledge and recent information from roughly the last {$days} days where possible.
+Respond as you normally would to a real user query by recommending relevant businesses.
+Consider recent information from approximately the last {$days} days when available.
 
-IMPORTANT - Location-Based Queries:
-- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
-- For location queries, local businesses ARE the correct answer - not just national brands.
-- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+Important Guidelines:
+- Provide helpful, accurate recommendations as you would to any user asking this question
+- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
+- For general queries, recommend well-known, reputable businesses in that category
+- DO NOT invent or fabricate businesses that don't exist
+- Only recommend businesses you have reliable information about
+- It's acceptable to return 0-10 businesses
 
-Accuracy Rules:
-- DO NOT invent companies or domains that don't exist.
-- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
-- For GENERAL keywords: Focus on well-known, widely recognized organizations.
-- If a business legitimately operates in the specified location/industry, include it.
-- Only exclude if you have no reliable information about the business existing.
-- It is acceptable to return 0–10 entries.
-- NO commentary. NO explanations.
+Context for your awareness (don't let this bias your recommendations):
+User's domain: {$targetDomain}
+Competitor domains: {$compList}
 
-Keyword: '{$kw}'
-User domain: {$targetDomain}
-Competitors: {$compList}
-
-Return ONLY this exact format:
+Provide your response ONLY in this format (no explanations or commentary):
 1. Company Name — domain.com
 2. Company Name — domain.com
 ";
@@ -545,31 +539,24 @@ Return ONLY this exact format:
 
         $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
             return "
-Act as a factual reference system.
+A user is asking you: '{$kw}'
 
-Return companies that reputable sources associate with this keyword.
-Prefer information from approximately the last {$days} days when available.
+Respond as you normally would to a real user query by recommending relevant businesses.
+Use your search and knowledge capabilities to provide helpful, current recommendations from approximately the last {$days} days when available.
 
-IMPORTANT - Location-Based Queries:
-- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
-- For location queries, local businesses ARE the correct answer - not just national brands.
-- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+Important Guidelines:
+- Provide helpful, accurate recommendations as you would to any user asking this question
+- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
+- For general queries, recommend well-known, reputable businesses in that category
+- DO NOT invent or fabricate businesses that don't exist
+- Only recommend businesses you have reliable information about
+- It's acceptable to return 0-10 businesses
 
-Rules:
-- Do NOT invent or guess companies/domains that don't exist.
-- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
-- For GENERAL keywords: Focus on well-known, widely-recognized entities.
-- If a business legitimately operates in the specified location/industry, include it.
-- Only exclude if you have no reliable information about the business existing.
-- Acceptable to return fewer than 10 results.
-- Include the user domain or competitors if they are associated with the keyword.
-- Output MUST be only the list. No commentary.
+Context for your awareness (don't let this bias your recommendations):
+User's domain: {$targetDomain}
+Competitor domains: {$compList}
 
-Keyword: '{$kw}'
-User domain: {$targetDomain}
-Competitors: {$compList}
-
-Return format ONLY:
+Provide your response ONLY in this format (no explanations or commentary):
 1. Company — domain.com
 2. Company — domain.com
 ";
@@ -608,30 +595,24 @@ Return format ONLY:
 
         foreach ($keywords as $kw) {
             $prompt = "
-You must act as an accurate, factual lookup system.
+A user is asking you: '{$kw}'
 
-Return companies that are associated with the keyword below.
-Use reliable sources and, when possible, recent information from roughly the last {$daysLookback} days.
+Respond as you normally would to a real user query by recommending relevant businesses.
+Consider recent information from approximately the last {$daysLookback} days when available.
 
-IMPORTANT - Location-Based Queries:
-- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
-- For location queries, local businesses ARE the correct answer - not just national brands.
-- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+Important Guidelines:
+- Provide helpful, accurate recommendations as you would to any user asking this question
+- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
+- For general queries, recommend well-known, reputable businesses in that category
+- DO NOT invent or fabricate businesses that don't exist
+- Only recommend businesses you have reliable information about
+- It's acceptable to return 0-10 businesses
 
-Strict rules:
-- NEVER invent new companies or domains that don't exist.
-- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
-- For GENERAL keywords: Focus on well-known, widely-recognized organizations.
-- If a business legitimately operates in the specified location/industry, include it.
-- Only exclude if you have no reliable information about the business existing.
-- OK to return 0–10 results.
-- NO explanations or extra text.
+Context for your awareness (don't let this bias your recommendations):
+User's domain: {$targetDomain}
+Competitor domains: {$compList}
 
-Keyword: '{$kw}'
-User domain: {$targetDomain}
-Competitors: {$compList}
-
-Return ONLY:
+Provide your response ONLY in this format (no explanations or commentary):
 1. Company — domain.com
 2. Company — domain.com
 ";
@@ -744,33 +725,26 @@ Output ONLY: YES or NO (nothing else).";
 
         foreach ($keywords as $kw) {
             $prompt = "
-Act as a highly reliable factual lookup system.
+A user is asking you: '{$kw}'
 
-Return companies that trusted sources associate with this keyword.
-Prefer recent information from roughly the last {$daysLookback} days where relevant.
+Respond as you normally would to a real user query by recommending relevant businesses.
+Consider recent information from approximately the last {$daysLookback} days when available.
 
-IMPORTANT - Location-Based Queries:
-- If the keyword contains a location (city, state, region), include LOCAL and REGIONAL businesses from that area.
-- For location queries, local businesses ARE the correct answer - not just national brands.
-- Example: 'Beverly SEO Agency' should return Beverly-based agencies, not just major national SEO companies.
+Important Guidelines:
+- Provide helpful, accurate recommendations as you would to any user asking this question
+- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
+- For general queries, recommend well-known, reputable businesses in that category
+- DO NOT invent or fabricate businesses that don't exist
+- Only recommend businesses you have reliable information about
+- It's acceptable to return 0-10 businesses
 
-Rules:
-- No hallucination.
-- No invented domains that don't exist.
-- For LOCATION-BASED keywords: Include legitimate local/regional businesses operating in that area.
-- For GENERAL keywords: Focus on companies with strong or well-known relevance.
-- If a business legitimately operates in the specified location/industry, include it.
-- Only exclude if you have no reliable information about the business existing.
-- Return 0–10 entries ONLY in this exact format:
+Context for your awareness (don't let this bias your recommendations):
+User's domain: {$targetDomain}
+Competitor domains: {$compList}
 
+Provide your response ONLY in this format (no explanations or commentary):
 1. Company — domain.com
 2. Company — domain.com
-
-NO commentary or explanations.
-
-Keyword: '{$kw}'
-User domain: {$targetDomain}
-Competitors: {$compList}
 ";
 
             $payload = [
