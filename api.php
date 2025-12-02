@@ -343,28 +343,55 @@ class LLMAnalyzer
         ];
 
         foreach ($keywords as $kw) {
-            // Build prompt for main query
-            $prompt = $promptBuilder($kw, $daysLookback);
+            // DIRECT QUERY: Ask if the user's business would be recommended for this query
+            $userDomain = $this->domain($website);
+            $userMentioned = false;
 
-            $payload = $basePayload;
-            $payload['messages'] = [
-                [
-                    'role'    => 'user',
-                    'content' => $prompt
-                ]
-            ];
+            if ($userDomain) {
+                $userQueryPrompt = "A user is asking: '{$kw}'
 
-            $resp = $this->curl_json($url, [
-                'Content-Type: application/json',
-                $authHeader
-            ], $payload);
+Would you recommend {$userDomain}" . ($company ? " ({$company})" : "") . " to someone asking this question?
 
-            $text = '';
-            if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
-                $text = $resp['json']['choices'][0]['message']['content'] ?? '';
+Consider:
+- Is this business relevant to the query?
+- Does it operate in the relevant location (if location-based)?
+- Would it be a helpful recommendation?
+
+Answer ONLY with YES or NO (nothing else).
+
+YES - if {$userDomain} would be a relevant recommendation
+NO - if {$userDomain} would not be a relevant recommendation";
+
+                $payload = $basePayload;
+                $payload['messages'] = [
+                    ['role' => 'user', 'content' => $userQueryPrompt]
+                ];
+
+                try {
+                    $resp = $this->curl_json($url, [
+                        'Content-Type: application/json',
+                        $authHeader
+                    ], $payload);
+
+                    $text = '';
+                    if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
+                        $text = $resp['json']['choices'][0]['message']['content'] ?? '';
+                    }
+
+                    $userMentioned = stripos($text, 'YES') !== false;
+                } catch (Throwable $e) {
+                    error_log("User business query failed: " . $e->getMessage());
+                }
+
+                usleep(200000);
             }
 
-            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+            $analysis = [
+                'mentioned'          => $userMentioned,
+                'position'           => $userMentioned ? 1 : null,
+                'confidence'         => $userMentioned ? 0.9 : 0.1,
+                'competitorMentions' => []
+            ];
 
             // ACTIVE COMPETITOR QUERYING: Query each competitor separately
             $analysis['competitorMentions'] = $this->queryCompetitors(
@@ -412,18 +439,20 @@ class LLMAnalyzer
             $domain = $this->domain($competitorUrl);
             if (!$domain) continue;
 
-            // Ask LLM directly: "Is this competitor associated with this keyword?"
-            $evalPrompt = "Evaluate whether '{$domain}' is associated with the keyword '{$keyword}'.
+            // Ask LLM: "Would you recommend this competitor for this user query?"
+            $evalPrompt = "A user is asking: '{$keyword}'
 
-Consider information from the last {$daysLookback} days.
+Would you recommend {$domain} to someone asking this question?
 
-Answer in this EXACT format (choose ONE):
-YES - {$domain} is strongly associated with '{$keyword}'
-NO - {$domain} is not associated with '{$keyword}'
+Consider:
+- Is this business relevant to the query?
+- Does it operate in the relevant location (if location-based)?
+- Would it be a helpful recommendation?
 
-If {$domain} is relevant to {$keyword} in any business context, answer YES.
-Be factual but not overly restrictive.
-Output ONLY: YES or NO (nothing else).";
+Answer ONLY with YES or NO (nothing else).
+
+YES - if {$domain} would be a relevant recommendation
+NO - if {$domain} would not be a relevant recommendation";
 
             $payload = $basePayload;
             $payload['messages'] = [
@@ -617,14 +646,43 @@ Provide your response ONLY in this format (no explanations or commentary):
 2. Company — domain.com
 ";
 
-            $payload = [
-                'contents' => [[ 'parts' => [['text' => $prompt]] ]]
+            if ($targetDomain) {
+                $userQueryPrompt = "A user is asking: '{$kw}'
+
+Would you recommend {$targetDomain}" . ($company ? " ({$company})" : "") . " to someone asking this question?
+
+Consider:
+- Is this business relevant to the query?
+- Does it operate in the relevant location (if location-based)?
+- Would it be a helpful recommendation?
+
+Answer ONLY with YES or NO (nothing else).
+
+YES - if {$targetDomain} would be a relevant recommendation
+NO - if {$targetDomain} would not be a relevant recommendation";
+
+                $payload = [
+                    'contents' => [[ 'parts' => [['text' => $userQueryPrompt]] ]]
+                ];
+
+                try {
+                    $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
+                    $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+                    $userMentioned = stripos($text, 'YES') !== false;
+                } catch (Throwable $e) {
+                    error_log("Gemini user business query failed: " . $e->getMessage());
+                }
+
+                usleep(200000);
+            }
+
+            $analysis = [
+                'mentioned'          => $userMentioned,
+                'position'           => $userMentioned ? 1 : null,
+                'confidence'         => $userMentioned ? 0.9 : 0.1,
+                'competitorMentions' => []
             ];
-
-            $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
-            $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
-            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING for Gemini
             $analysis['competitorMentions'] = $this->queryCompetitorsGemini($url, $competitors, $kw, $daysLookback);
@@ -657,17 +715,19 @@ Provide your response ONLY in this format (no explanations or commentary):
             $domain = $this->domain($competitorUrl);
             if (!$domain) continue;
 
-            $evalPrompt = "Evaluate whether '{$domain}' is associated with the keyword '{$keyword}'.
+            $evalPrompt = "A user is asking: '{$keyword}'
 
-Consider information from the last {$daysLookback} days.
+Would you recommend {$domain} to someone asking this question?
 
-Answer in this EXACT format (choose ONE):
-YES - {$domain} is strongly associated with '{$keyword}'
-NO - {$domain} is not associated with '{$keyword}'
+Consider:
+- Is this business relevant to the query?
+- Does it operate in the relevant location (if location-based)?
+- Would it be a helpful recommendation?
 
-If {$domain} is relevant to {$keyword} in any business context, answer YES.
-Be factual but not overly restrictive.
-Output ONLY: YES or NO (nothing else).";
+Answer ONLY with YES or NO (nothing else).
+
+YES - if {$domain} would be a relevant recommendation
+NO - if {$domain} would not be a relevant recommendation";
 
             $payload = [
                 'contents' => [[ 'parts' => [['text' => $evalPrompt]] ]]
@@ -747,18 +807,37 @@ Provide your response ONLY in this format (no explanations or commentary):
 2. Company — domain.com
 ";
 
-            $payload = [
-                'model'      => $model,
-                'max_tokens' => 600,
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt]
-                ]
+Answer ONLY with YES or NO (nothing else).
+
+YES - if {$targetDomain} would be a relevant recommendation
+NO - if {$targetDomain} would not be a relevant recommendation";
+
+                $payload = [
+                    'model'      => $model,
+                    'max_tokens' => 100,
+                    'messages'   => [
+                        ['role' => 'user', 'content' => $userQueryPrompt]
+                    ]
+                ];
+
+                try {
+                    $resp = $this->curl_json($url, $headers, $payload);
+                    $text = $resp['json']['content'][0]['text'] ?? '';
+
+                    $userMentioned = stripos($text, 'YES') !== false;
+                } catch (Throwable $e) {
+                    error_log("Claude user business query failed: " . $e->getMessage());
+                }
+
+                usleep(200000);
+            }
+
+            $analysis = [
+                'mentioned'          => $userMentioned,
+                'position'           => $userMentioned ? 1 : null,
+                'confidence'         => $userMentioned ? 0.9 : 0.1,
+                'competitorMentions' => []
             ];
-
-            $resp = $this->curl_json($url, $headers, $payload);
-            $text = $resp['json']['content'][0]['text'] ?? '';
-
-            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING for Claude
             $analysis['competitorMentions'] = $this->queryCompetitorsClaude($url, $model, $headers, $competitors, $kw, $daysLookback);
@@ -791,17 +870,19 @@ Provide your response ONLY in this format (no explanations or commentary):
             $domain = $this->domain($competitorUrl);
             if (!$domain) continue;
 
-            $evalPrompt = "Evaluate whether '{$domain}' is associated with the keyword '{$keyword}'.
+            $evalPrompt = "A user is asking: '{$keyword}'
 
-Consider information from the last {$daysLookback} days.
+Would you recommend {$domain} to someone asking this question?
 
-Answer in this EXACT format (choose ONE):
-YES - {$domain} is strongly associated with '{$keyword}'
-NO - {$domain} is not associated with '{$keyword}'
+Consider:
+- Is this business relevant to the query?
+- Does it operate in the relevant location (if location-based)?
+- Would it be a helpful recommendation?
 
-If {$domain} is relevant to {$keyword} in any business context, answer YES.
-Be factual but not overly restrictive.
-Output ONLY: YES or NO (nothing else).";
+Answer ONLY with YES or NO (nothing else).
+
+YES - if {$domain} would be a relevant recommendation
+NO - if {$domain} would not be a relevant recommendation";
 
             $payload = [
                 'model'      => $model,
