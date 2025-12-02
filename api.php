@@ -623,8 +623,28 @@ Provide your response ONLY in this format (no explanations or commentary):
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // DIRECT QUERY: Ask if the user's business would be recommended for this query
-            $userMentioned = false;
+            $prompt = "
+A user is asking you: '{$kw}'
+
+Respond as you normally would to a real user query by recommending relevant businesses.
+Consider recent information from approximately the last {$daysLookback} days when available.
+
+Important Guidelines:
+- Provide helpful, accurate recommendations as you would to any user asking this question
+- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
+- For general queries, recommend well-known, reputable businesses in that category
+- DO NOT invent or fabricate businesses that don't exist
+- Only recommend businesses you have reliable information about
+- It's acceptable to return 0-10 businesses
+
+Context for your awareness (don't let this bias your recommendations):
+User's domain: {$targetDomain}
+Competitor domains: {$compList}
+
+Provide your response ONLY in this format (no explanations or commentary):
+1. Company — domain.com
+2. Company — domain.com
+";
 
             if ($targetDomain) {
                 $userQueryPrompt = "A user is asking: '{$kw}'
@@ -764,18 +784,28 @@ NO - if {$domain} would not be a relevant recommendation";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // DIRECT QUERY: Ask if the user's business would be recommended for this query
-            $userMentioned = false;
+            $prompt = "
+A user is asking you: '{$kw}'
 
-            if ($targetDomain) {
-                $userQueryPrompt = "A user is asking: '{$kw}'
+Respond as you normally would to a real user query by recommending relevant businesses.
+Consider recent information from approximately the last {$daysLookback} days when available.
 
-Would you recommend {$targetDomain}" . ($company ? " ({$company})" : "") . " to someone asking this question?
+Important Guidelines:
+- Provide helpful, accurate recommendations as you would to any user asking this question
+- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
+- For general queries, recommend well-known, reputable businesses in that category
+- DO NOT invent or fabricate businesses that don't exist
+- Only recommend businesses you have reliable information about
+- It's acceptable to return 0-10 businesses
 
-Consider:
-- Is this business relevant to the query?
-- Does it operate in the relevant location (if location-based)?
-- Would it be a helpful recommendation?
+Context for your awareness (don't let this bias your recommendations):
+User's domain: {$targetDomain}
+Competitor domains: {$compList}
+
+Provide your response ONLY in this format (no explanations or commentary):
+1. Company — domain.com
+2. Company — domain.com
+";
 
 Answer ONLY with YES or NO (nothing else).
 
