@@ -342,8 +342,13 @@ class LLMAnalyzer
         ];
 
         foreach ($keywords as $kw) {
-            // Simple, direct query - pass keyword as-is
-            $query = $kw;
+            // Broader, contextual query - mention the brands we care about
+            $targetDomain = $this->domain($website);
+            $compDomains  = array_filter(array_map([$this,'domain'], $competitors));
+            $allDomains   = array_merge([$targetDomain], $compDomains);
+            $domainList   = implode(', ', array_filter($allDomains));
+
+            $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
 
             $payload = $basePayload;
 
@@ -352,7 +357,7 @@ class LLMAnalyzer
                 $payload['messages'] = [
                     [
                         'role' => 'system',
-                        'content' => 'You are a knowledgeable assistant with expertise in business landscapes.'
+                        'content' => 'You are a knowledgeable assistant. Answer factually based on what you know.'
                     ],
                     [
                         'role' => 'user',
@@ -562,8 +567,11 @@ Output ONLY: YES or NO (nothing else).";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // Simple, direct query - pass keyword as-is
-            $query = $kw;
+            // Broader, contextual query - mention the brands we care about
+            $allDomains = array_merge([$targetDomain], $compDomains);
+            $domainList = implode(', ', array_filter($allDomains));
+
+            $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
 
             $payload = [
                 'contents' => [[ 'parts' => [['text' => $query]] ]]
@@ -678,8 +686,11 @@ Output ONLY: YES or NO (nothing else).";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // Simple, direct query - pass keyword as-is
-            $query = $kw;
+            // Broader, contextual query - mention the brands we care about
+            $allDomains = array_merge([$targetDomain], $compDomains);
+            $domainList = implode(', ', array_filter($allDomains));
+
+            $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
 
             $payload = [
                 'model'      => $model,
