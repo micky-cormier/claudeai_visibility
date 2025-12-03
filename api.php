@@ -889,6 +889,12 @@ Output ONLY: YES or NO (nothing else).";
 
             // Check for own domain
             if ($domain && stripos($line, $domain) !== false) {
+                // CRITICAL: Check for negative context before marking as mentioned
+                if ($this->isNegativeContext($line, $domain)) {
+                    error_log("[ANALYSIS] Skipping '$domain' in negative context: " . substr($line, 0, 100));
+                    continue; // Skip this mention - it's in negative context
+                }
+
                 $result['mentioned']  = true;
                 $result['position']   = $pos;
                 $result['confidence'] = 0.85;
@@ -897,6 +903,12 @@ Output ONLY: YES or NO (nothing else).";
 
             // Check for company name if domain not found
             if ($lowerCompany && stripos(strtolower($line), $lowerCompany) !== false) {
+                // CRITICAL: Check for negative context before marking as mentioned
+                if ($this->isNegativeContext($line, $lowerCompany)) {
+                    error_log("[ANALYSIS] Skipping '$lowerCompany' in negative context: " . substr($line, 0, 100));
+                    continue; // Skip this mention - it's in negative context
+                }
+
                 $result['mentioned']  = true;
                 $result['position']   = $pos;
                 $result['confidence'] = 0.6;
@@ -908,6 +920,49 @@ Output ONLY: YES or NO (nothing else).";
         // We no longer do passive competitor detection here
 
         return $result;
+    }
+
+    /**
+     * Check if a domain/company mention is in negative context
+     * Returns true if the mention is in a negative/exclusionary statement
+     */
+    private function isNegativeContext(string $line, string $term): bool
+    {
+        $lowerLine = strtolower($line);
+
+        // Negative phrases that indicate the business is NOT relevant
+        $negativePatterns = [
+            'none of the businesses',
+            'none of these',
+            'not directly related',
+            'are not related',
+            'aren\'t related',
+            'not associated',
+            'no direct connection',
+            'not relevant',
+            'don\'t appear to be',
+            'do not appear to be',
+            'not specifically',
+            'are not',
+            'aren\'t',
+            'not known for',
+            'don\'t specialize',
+            'do not specialize',
+            'however,',  // Often precedes a contradiction
+            'unfortunately,',  // Often precedes negative info
+        ];
+
+        foreach ($negativePatterns as $pattern) {
+            // Check if negative pattern appears before the term in the sentence
+            $patternPos = stripos($lowerLine, $pattern);
+            $termPos = stripos($lowerLine, strtolower($term));
+
+            if ($patternPos !== false && $termPos !== false && $patternPos < $termPos) {
+                return true; // Negative context found before the term
+            }
+        }
+
+        return false; // No negative context detected
     }
 
     private function domain(string $url): string
