@@ -349,16 +349,28 @@ class LLMAnalyzer
             $prompt = $promptBuilder($kw, $daysLookback);
 
             $payload = $basePayload;
-            $payload['messages'] = [
-                [
-                    'role' => 'system',
-                    'content' => 'You are a knowledgeable assistant with expertise in business landscapes.'
-                ],
-                [
-                    'role' => 'user',
-                    'content' => $query
-                ]
-            ];
+
+            // Only OpenAI supports system messages in this context
+            if ($platformName === 'OpenAI') {
+                $payload['messages'] = [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are a knowledgeable assistant with expertise in business landscapes.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $query
+                    ]
+                ];
+            } else {
+                // Perplexity and others: just user message
+                $payload['messages'] = [
+                    [
+                        'role' => 'user',
+                        'content' => $query
+                    ]
+                ];
+            }
 
             $text = '';
             try {
@@ -559,8 +571,8 @@ Provide your response ONLY in this format (no explanations or commentary):
 
         $basePayload = [
             'model'      => $model,
-            'max_tokens' => 600,
-            'temperature'=> 0.0
+            'max_tokens' => 1200,
+            'temperature'=> 0.1
         ];
 
         $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
