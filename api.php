@@ -343,12 +343,38 @@ class LLMAnalyzer
         ];
 
         foreach ($keywords as $kw) {
+            // Use original working prompt format
+            $query = "Tell me about $kw services. What companies and agencies provide these services? Include any providers you know about.";
             // Build prompt for main query
             $prompt = $promptBuilder($kw, $daysLookback);
 
             $payload = $basePayload;
             $payload['messages'] = [
                 [
+                    'role' => 'system',
+                    'content' => 'You are a knowledgeable assistant with expertise in business landscapes.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $query
+                ]
+            ];
+
+            $text = '';
+            try {
+                $resp = $this->curl_json($url, [
+                    'Content-Type: application/json',
+                    $authHeader
+                ], $payload);
+
+                if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
+                    $text = $resp['json']['choices'][0]['message']['content'] ?? '';
+                }
+            } catch (Throwable $e) {
+                error_log("[$platformName] Query failed for keyword '$kw': " . $e->getMessage());
+            }
+
+            // Analyze the response using original logic
                     'role'    => 'user',
                     'content' => $prompt
                 ]
@@ -387,7 +413,7 @@ class LLMAnalyzer
                 }
             }
 
-            usleep(300000);
+            sleep(1); // Rate limiting like original
         }
 
         $results['score'] = $this->platformScore($results, count($keywords));
@@ -471,7 +497,7 @@ Output ONLY: YES or NO (nothing else).";
     private function q_chatgpt(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.openai.com/v1/chat/completions';
-        $model = 'gpt-4o-mini';
+        $model = 'gpt-4o';
 
         $targetDomain = $this->domain($website);
         $compDomains  = array_filter(array_map([$this,'domain'], $competitors));
@@ -479,8 +505,8 @@ Output ONLY: YES or NO (nothing else).";
 
         $basePayload = [
             'model'      => $model,
-            'max_tokens' => 600,
-            'temperature'=> 0.0
+            'max_tokens' => 1200,
+            'temperature'=> 0.1
         ];
 
         $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
@@ -594,6 +620,22 @@ Provide your response ONLY in this format (no explanations or commentary):
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
+            // Use original working prompt format
+            $query = "Tell me about $kw services. What companies and agencies provide these services?";
+
+            $payload = [
+                'contents' => [[ 'parts' => [['text' => $query]] ]]
+            ];
+
+            $text = '';
+            try {
+                $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
+                $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            } catch (Throwable $e) {
+                error_log("[Gemini] Query failed for keyword '$kw': " . $e->getMessage());
+            }
+
+            // Analyze the response using original logic
             $prompt = "
 A user is asking you: '{$kw}'
 
@@ -639,7 +681,7 @@ Provide your response ONLY in this format (no explanations or commentary):
                 }
             }
 
-            usleep(300000);
+            sleep(1); // Rate limiting like original
         }
 
         $results['score'] = $this->platformScore($results, count($keywords));
@@ -724,6 +766,26 @@ Output ONLY: YES or NO (nothing else).";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
+            // Use original working prompt format
+            $query = "Tell me about $kw services. What companies and agencies provide these services?";
+
+            $payload = [
+                'model'      => $model,
+                'max_tokens' => 1200,
+                'messages'   => [
+                    ['role' => 'user', 'content' => $query]
+                ]
+            ];
+
+            $text = '';
+            try {
+                $resp = $this->curl_json($url, $headers, $payload);
+                $text = $resp['json']['content'][0]['text'] ?? '';
+            } catch (Throwable $e) {
+                error_log("[Claude] Query failed for keyword '$kw': " . $e->getMessage());
+            }
+
+            // Analyze the response using original logic
             $prompt = "
 A user is asking you: '{$kw}'
 
@@ -773,7 +835,7 @@ Provide your response ONLY in this format (no explanations or commentary):
                 }
             }
 
-            usleep(300000);
+            sleep(1); // Rate limiting like original
         }
 
         $results['score'] = $this->platformScore($results, count($keywords));

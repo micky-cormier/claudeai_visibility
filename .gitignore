@@ -1,0 +1,20 @@
+# Environment variables with API keys - NEVER commit this!
+.env
+
+# PHP error logs
+error_log
+php_errors.log
+
+# User data
+leads.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
