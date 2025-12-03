@@ -331,7 +331,6 @@ class LLMAnalyzer
         string $company,
         array $competitors,
         array $keywords,
-        callable $promptBuilder,
         int $daysLookback
     ): array {
         $results = [
@@ -345,8 +344,6 @@ class LLMAnalyzer
         foreach ($keywords as $kw) {
             // Use original working prompt format
             $query = "Tell me about $kw services. What companies and agencies provide these services? Include any providers you know about.";
-            // Build prompt for main query
-            $prompt = $promptBuilder($kw, $daysLookback);
 
             $payload = $basePayload;
 
@@ -387,21 +384,6 @@ class LLMAnalyzer
             }
 
             // Analyze the response using original logic
-                    'role'    => 'user',
-                    'content' => $prompt
-                ]
-            ];
-
-            $resp = $this->curl_json($url, [
-                'Content-Type: application/json',
-                $authHeader
-            ], $payload);
-
-            $text = '';
-            if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
-                $text = $resp['json']['choices'][0]['message']['content'] ?? '';
-            }
-
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING: Query each competitor separately
@@ -521,31 +503,6 @@ Output ONLY: YES or NO (nothing else).";
             'temperature'=> 0.1
         ];
 
-        $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
-            return "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Consider recent information from approximately the last {$days} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company Name — domain.com
-2. Company Name — domain.com
-";
-        };
-
         return $this->query_llm_list_style(
             'OpenAI',
             $url,
@@ -555,7 +512,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             $company,
             $competitors,
             $keywords,
-            $promptBuilder,
             $daysLookback
         );
     }
@@ -575,31 +531,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             'temperature'=> 0.1
         ];
 
-        $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
-            return "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Use your search and knowledge capabilities to provide helpful, current recommendations from approximately the last {$days} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company — domain.com
-2. Company — domain.com
-";
-        };
-
         return $this->query_llm_list_style(
             'Perplexity',
             $url,
@@ -609,7 +540,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             $company,
             $competitors,
             $keywords,
-            $promptBuilder,
             $daysLookback
         );
     }
@@ -648,36 +578,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             }
 
             // Analyze the response using original logic
-            $prompt = "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Consider recent information from approximately the last {$daysLookback} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company — domain.com
-2. Company — domain.com
-";
-
-            $payload = [
-                'contents' => [[ 'parts' => [['text' => $prompt]] ]]
-            ];
-
-            $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
-            $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING for Gemini
@@ -798,40 +698,6 @@ Output ONLY: YES or NO (nothing else).";
             }
 
             // Analyze the response using original logic
-            $prompt = "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Consider recent information from approximately the last {$daysLookback} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company — domain.com
-2. Company — domain.com
-";
-
-            $payload = [
-                'model'      => $model,
-                'max_tokens' => 600,
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt]
-                ]
-            ];
-
-            $resp = $this->curl_json($url, $headers, $payload);
-            $text = $resp['json']['content'][0]['text'] ?? '';
-
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING for Claude
