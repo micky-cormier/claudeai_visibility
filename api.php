@@ -689,7 +689,7 @@ Output ONLY: YES or NO (nothing else).";
     private function q_claude(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.anthropic.com/v1/messages';
-        $model = 'claude-3-sonnet-20240229'; // Using base Claude 3 Sonnet (universally available)
+        $model = 'claude-3-sonnet-20240229'; // Base Claude 3 Sonnet
 
         // DEBUG: Verify API key is present
         $keyPresent = !empty($this->keys['anthropic']);
@@ -705,7 +705,7 @@ Output ONLY: YES or NO (nothing else).";
         // DEBUG: Log request configuration
         error_log("[Claude] Request URL: $url");
         error_log("[Claude] Model: $model");
-        error_log("[Claude] API Version: 2023-06-01");
+        error_log("[Claude] API Version header: 2023-06-01");
 
         $results = [
             'platform'       => 'Claude',
