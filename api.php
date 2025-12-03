@@ -689,7 +689,7 @@ Output ONLY: YES or NO (nothing else).";
     private function q_claude(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.anthropic.com/v1/messages';
-        $model = 'claude-3-sonnet-20240229'; // Base Claude 3 Sonnet
+        $model = 'claude-3-5-sonnet-latest'; // Use latest version automatically
 
         // DEBUG: Verify API key is present
         $keyPresent = !empty($this->keys['anthropic']);
