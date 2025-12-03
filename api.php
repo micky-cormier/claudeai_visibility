@@ -342,55 +342,37 @@ class LLMAnalyzer
         ];
 
         foreach ($keywords as $kw) {
-            // DIRECT QUERY: Ask if the user's business would be recommended for this query
-            $userDomain = $this->domain($website);
-            $userMentioned = false;
+            // Use original working prompt format
+            $query = "Tell me about $kw services. What companies and agencies provide these services? Include any providers you know about.";
 
-            if ($userDomain) {
-                $userQueryPrompt = "A user is asking: '{$kw}'
+            $payload = $basePayload;
+            $payload['messages'] = [
+                [
+                    'role' => 'system',
+                    'content' => 'You are a knowledgeable assistant with expertise in business landscapes.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $query
+                ]
+            ];
 
-Would you recommend {$userDomain}" . ($company ? " ({$company})" : "") . " to someone asking this question?
+            $text = '';
+            try {
+                $resp = $this->curl_json($url, [
+                    'Content-Type: application/json',
+                    $authHeader
+                ], $payload);
 
-Consider:
-- Is this business relevant to the query?
-- Does it operate in the relevant location (if location-based)?
-- Would it be a helpful recommendation?
-
-Answer ONLY with YES or NO (nothing else).
-
-YES - if {$userDomain} would be a relevant recommendation
-NO - if {$userDomain} would not be a relevant recommendation";
-
-                $payload = $basePayload;
-                $payload['messages'] = [
-                    ['role' => 'user', 'content' => $userQueryPrompt]
-                ];
-
-                try {
-                    $resp = $this->curl_json($url, [
-                        'Content-Type: application/json',
-                        $authHeader
-                    ], $payload);
-
-                    $text = '';
-                    if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
-                        $text = $resp['json']['choices'][0]['message']['content'] ?? '';
-                    }
-
-                    $userMentioned = stripos($text, 'YES') !== false;
-                } catch (Throwable $e) {
-                    error_log("User business query failed: " . $e->getMessage());
+                if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
+                    $text = $resp['json']['choices'][0]['message']['content'] ?? '';
                 }
-
-                usleep(200000);
+            } catch (Throwable $e) {
+                error_log("[$platformName] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
-            $analysis = [
-                'mentioned'          => $userMentioned,
-                'position'           => $userMentioned ? 1 : null,
-                'confidence'         => $userMentioned ? 0.9 : 0.1,
-                'competitorMentions' => []
-            ];
+            // Analyze the response using original logic
+            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING: Query each competitor separately
             $analysis['competitorMentions'] = $this->queryCompetitors(
@@ -413,7 +395,7 @@ NO - if {$userDomain} would not be a relevant recommendation";
                 }
             }
 
-            usleep(300000);
+            sleep(1); // Rate limiting like original
         }
 
         $results['score'] = $this->platformScore($results, count($keywords));
@@ -499,7 +481,7 @@ NO - if {$domain} would not be a relevant recommendation";
     private function q_chatgpt(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.openai.com/v1/chat/completions';
-        $model = 'gpt-4o-mini';
+        $model = 'gpt-4o';
 
         $targetDomain = $this->domain($website);
         $compDomains  = array_filter(array_map([$this,'domain'], $competitors));
@@ -507,8 +489,8 @@ NO - if {$domain} would not be a relevant recommendation";
 
         $basePayload = [
             'model'      => $model,
-            'max_tokens' => 600,
-            'temperature'=> 0.0
+            'max_tokens' => 1200,
+            'temperature'=> 0.1
         ];
 
         return $this->query_llm_list_style(
@@ -570,46 +552,23 @@ NO - if {$domain} would not be a relevant recommendation";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // DIRECT QUERY: Ask if the user's business would be recommended for this query
-            $userMentioned = false;
+            // Use original working prompt format
+            $query = "Tell me about $kw services. What companies and agencies provide these services?";
 
-            if ($targetDomain) {
-                $userQueryPrompt = "A user is asking: '{$kw}'
+            $payload = [
+                'contents' => [[ 'parts' => [['text' => $query]] ]]
+            ];
 
-Would you recommend {$targetDomain}" . ($company ? " ({$company})" : "") . " to someone asking this question?
-
-Consider:
-- Is this business relevant to the query?
-- Does it operate in the relevant location (if location-based)?
-- Would it be a helpful recommendation?
-
-Answer ONLY with YES or NO (nothing else).
-
-YES - if {$targetDomain} would be a relevant recommendation
-NO - if {$targetDomain} would not be a relevant recommendation";
-
-                $payload = [
-                    'contents' => [[ 'parts' => [['text' => $userQueryPrompt]] ]]
-                ];
-
-                try {
-                    $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
-                    $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
-                    $userMentioned = stripos($text, 'YES') !== false;
-                } catch (Throwable $e) {
-                    error_log("Gemini user business query failed: " . $e->getMessage());
-                }
-
-                usleep(200000);
+            $text = '';
+            try {
+                $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
+                $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            } catch (Throwable $e) {
+                error_log("[Gemini] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
-            $analysis = [
-                'mentioned'          => $userMentioned,
-                'position'           => $userMentioned ? 1 : null,
-                'confidence'         => $userMentioned ? 0.9 : 0.1,
-                'competitorMentions' => []
-            ];
+            // Analyze the response using original logic
+            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING for Gemini
             $analysis['competitorMentions'] = $this->queryCompetitorsGemini($url, $competitors, $kw, $daysLookback);
@@ -624,7 +583,7 @@ NO - if {$targetDomain} would not be a relevant recommendation";
                 }
             }
 
-            usleep(300000);
+            sleep(1); // Rate limiting like original
         }
 
         $results['score'] = $this->platformScore($results, count($keywords));
@@ -711,50 +670,27 @@ NO - if {$domain} would not be a relevant recommendation";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // DIRECT QUERY: Ask if the user's business would be recommended for this query
-            $userMentioned = false;
+            // Use original working prompt format
+            $query = "Tell me about $kw services. What companies and agencies provide these services?";
 
-            if ($targetDomain) {
-                $userQueryPrompt = "A user is asking: '{$kw}'
+            $payload = [
+                'model'      => $model,
+                'max_tokens' => 1200,
+                'messages'   => [
+                    ['role' => 'user', 'content' => $query]
+                ]
+            ];
 
-Would you recommend {$targetDomain}" . ($company ? " ({$company})" : "") . " to someone asking this question?
-
-Consider:
-- Is this business relevant to the query?
-- Does it operate in the relevant location (if location-based)?
-- Would it be a helpful recommendation?
-
-Answer ONLY with YES or NO (nothing else).
-
-YES - if {$targetDomain} would be a relevant recommendation
-NO - if {$targetDomain} would not be a relevant recommendation";
-
-                $payload = [
-                    'model'      => $model,
-                    'max_tokens' => 100,
-                    'messages'   => [
-                        ['role' => 'user', 'content' => $userQueryPrompt]
-                    ]
-                ];
-
-                try {
-                    $resp = $this->curl_json($url, $headers, $payload);
-                    $text = $resp['json']['content'][0]['text'] ?? '';
-
-                    $userMentioned = stripos($text, 'YES') !== false;
-                } catch (Throwable $e) {
-                    error_log("Claude user business query failed: " . $e->getMessage());
-                }
-
-                usleep(200000);
+            $text = '';
+            try {
+                $resp = $this->curl_json($url, $headers, $payload);
+                $text = $resp['json']['content'][0]['text'] ?? '';
+            } catch (Throwable $e) {
+                error_log("[Claude] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
-            $analysis = [
-                'mentioned'          => $userMentioned,
-                'position'           => $userMentioned ? 1 : null,
-                'confidence'         => $userMentioned ? 0.9 : 0.1,
-                'competitorMentions' => []
-            ];
+            // Analyze the response using original logic
+            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
 
             // ACTIVE COMPETITOR QUERYING for Claude
             $analysis['competitorMentions'] = $this->queryCompetitorsClaude($url, $model, $headers, $competitors, $kw, $daysLookback);
@@ -769,7 +705,7 @@ NO - if {$targetDomain} would not be a relevant recommendation";
                 }
             }
 
-            usleep(300000);
+            sleep(1); // Rate limiting like original
         }
 
         $results['score'] = $this->platformScore($results, count($keywords));
