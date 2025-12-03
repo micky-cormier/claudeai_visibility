@@ -919,6 +919,13 @@ private function analyzeListText(
     $lowerKeyword = strtolower(trim($keyword));
     $lowerCompany = strtolower(trim($company));
 
+    // Extract key terms from keyword for flexible matching
+    // e.g., "Boston SEO AGENCY" -> ["boston", "seo", "agency"]
+    $keywordTerms = array_filter(explode(' ', $lowerKeyword), function($term) {
+        // Filter out common stopwords
+        return strlen($term) > 2 && !in_array($term, ['the', 'and', 'for', 'with']);
+    });
+
     $pos = 0;
     foreach ($lines as $line) {
         $line = trim($line);
@@ -937,13 +944,37 @@ private function analyzeListText(
                 continue;
             }
 
-            // Must mention or imply the keyword in same context
-            $keywordInLine = ($lowerKeyword !== '' && stripos($lowerLine, $lowerKeyword) !== false);
-
-            if ($keywordInLine && $this->isPositiveContext($line)) {
+            // SPECIAL CASE: Numbered list format (e.g., "1. Company - domain.com")
+            // This is almost always a positive recommendation
+            if (preg_match('/^\s*\d+[\.\)]\s*/', $line)) {
+                error_log("[LIST FORMAT] Detected numbered list with domain '$domain' at position $pos");
                 $result['mentioned']  = true;
                 $result['position']   = $pos;
-                $result['confidence'] = 0.95;
+                $result['confidence'] = 0.90;
+                break;
+            }
+
+            // Check if key terms from keyword are in the line (flexible matching)
+            $keywordRelevant = false;
+            if (empty($keywordTerms)) {
+                // No keyword terms to check
+                $keywordRelevant = true; // Allow if no specific keyword
+            } else {
+                // Check if at least 50% of keyword terms appear in line
+                $termsFound = 0;
+                foreach ($keywordTerms as $term) {
+                    if (stripos($lowerLine, $term) !== false) {
+                        $termsFound++;
+                    }
+                }
+                $keywordRelevant = ($termsFound / count($keywordTerms)) >= 0.5;
+            }
+
+            if ($keywordRelevant && $this->isPositiveContext($line)) {
+                error_log("[POSITIVE CONTEXT] Domain '$domain' with keyword relevance and positive language");
+                $result['mentioned']  = true;
+                $result['position']   = $pos;
+                $result['confidence'] = 0.85;
                 break;
             }
 
@@ -960,10 +991,31 @@ private function analyzeListText(
                 continue;
             }
 
-            // Must be keyword relevant
-            $keywordInLine = ($lowerKeyword !== '' && stripos($lowerLine, $lowerKeyword) !== false);
+            // Numbered list detection
+            if (preg_match('/^\s*\d+[\.\)]\s*/', $line)) {
+                error_log("[LIST FORMAT] Detected numbered list with company '$lowerCompany' at position $pos");
+                $result['mentioned']  = true;
+                $result['position']   = $pos;
+                $result['confidence'] = 0.80;
+                break;
+            }
 
-            if ($keywordInLine && $this->isPositiveContext($line)) {
+            // Flexible keyword matching
+            $keywordRelevant = false;
+            if (empty($keywordTerms)) {
+                $keywordRelevant = true;
+            } else {
+                $termsFound = 0;
+                foreach ($keywordTerms as $term) {
+                    if (stripos($lowerLine, $term) !== false) {
+                        $termsFound++;
+                    }
+                }
+                $keywordRelevant = ($termsFound / count($keywordTerms)) >= 0.5;
+            }
+
+            if ($keywordRelevant && $this->isPositiveContext($line)) {
+                error_log("[POSITIVE CONTEXT] Company '$lowerCompany' with keyword relevance and positive language");
                 $result['mentioned']  = true;
                 $result['position']   = $pos;
                 $result['confidence'] = 0.70;
