@@ -987,10 +987,32 @@ private function isNegativeContext(string $line, string $term): bool
     $lowerLine = strtolower($line);
     $lowerTerm = strtolower($term);
 
+    // CRITICAL: Check for "none of" patterns that come BEFORE the domain list
+    // Example: "none of the businesses you mentioned—domain.com, domain2.com—are related"
+    $noneOfPatterns = [
+        'none of the businesses',
+        'none of the companies',
+        'none of these businesses',
+        'none of these companies',
+        'none of these',
+        'none are',
+        'none appear'
+    ];
+
+    foreach ($noneOfPatterns as $pattern) {
+        $patternPos = stripos($lowerLine, $pattern);
+        $termPos = stripos($lowerLine, $lowerTerm);
+
+        if ($patternPos !== false && $termPos !== false && $patternPos < $termPos) {
+            error_log("[NEGATIVE] Detected 'none of' pattern before '$term': $pattern");
+            return true; // "none of" comes before the domain = negative context
+        }
+    }
+
     // If the model explicitly says it's NOT related to the keyword
     // Example: "greenbananaseo.com ... is not directly related to pickles"
     $negationPatterns = [
-	    'is not directly related',
+        'is not directly related',
         'not related',
         'not directly related',
         'not relevant',
@@ -1010,7 +1032,9 @@ private function isNegativeContext(string $line, string $term): bool
         "does not appear to be",
         "no direct connection",
         "does not directly relate",
-        "no association"
+        "no association",
+        "however,", // Contradiction indicator
+        "instead," // Redirection indicator
     ];
 
     foreach ($negationPatterns as $pattern) {
@@ -1019,6 +1043,7 @@ private function isNegativeContext(string $line, string $term): bool
             stripos($lowerLine, $lowerTerm) !== false &&
             stripos($lowerLine, $pattern) < stripos($lowerLine, $lowerTerm)
         ) {
+            error_log("[NEGATIVE] Detected negation pattern before '$term': $pattern");
             return true;
         }
     }
