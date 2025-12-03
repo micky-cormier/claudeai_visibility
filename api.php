@@ -272,6 +272,9 @@ class LLMAnalyzer
         if (!empty($this->keys['perplexity'])) $platforms[] = 'perplexity';
         if (!empty($this->keys['anthropic']))  $platforms[] = 'claude';
 
+        // DEBUG: Log which platforms will be queried
+        error_log("=== ANALYSIS START === Platforms to query: " . implode(', ', $platforms));
+
         $out = [
             'timestamp'       => date('c'),
             'website'         => $data['website'],
@@ -282,6 +285,7 @@ class LLMAnalyzer
         ];
 
         foreach ($platforms as $p) {
+            error_log("--- Starting query for platform: $p ---");
             try {
                 $method = 'q_' . $p;
                 $out['platformResults'][$p] = $this->$method(
@@ -291,8 +295,10 @@ class LLMAnalyzer
                     $data['keywords'],
                     $daysLookback
                 );
+                // DEBUG: Log the result summary
+                error_log("[$p] RESULT: mentions=" . $out['platformResults'][$p]['mentions'] . ", score=" . $out['platformResults'][$p]['score']);
             } catch (Throwable $e) {
-                error_log("[$p] " . $e->getMessage());
+                error_log("[$p] EXCEPTION: " . $e->getMessage());
                 $out['platformResults'][$p] = [
                     'platform'       => ucfirst($p),
                     'error'          => $e->getMessage(),
@@ -350,6 +356,9 @@ class LLMAnalyzer
 
             $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
 
+            // DEBUG: Log the query being sent
+            error_log("[$platformName] QUERY for keyword '$kw': $query");
+
             $payload = $basePayload;
 
             // Only OpenAI supports system messages in this context
@@ -384,12 +393,18 @@ class LLMAnalyzer
                 if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
                     $text = $resp['json']['choices'][0]['message']['content'] ?? '';
                 }
+
+                // DEBUG: Log the response received
+                error_log("[$platformName] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
             } catch (Throwable $e) {
                 error_log("[$platformName] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
             // Analyze the response using original logic
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+
+            // DEBUG: Log the analysis result
+            error_log("[$platformName] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
 
             // ACTIVE COMPETITOR QUERYING: Query each competitor separately
             $analysis['competitorMentions'] = $this->queryCompetitors(
@@ -573,6 +588,9 @@ Output ONLY: YES or NO (nothing else).";
 
             $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
 
+            // DEBUG: Log the query being sent
+            error_log("[Gemini] QUERY for keyword '$kw': $query");
+
             $payload = [
                 'contents' => [[ 'parts' => [['text' => $query]] ]]
             ];
@@ -581,12 +599,18 @@ Output ONLY: YES or NO (nothing else).";
             try {
                 $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
                 $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+                // DEBUG: Log the response received
+                error_log("[Gemini] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
             } catch (Throwable $e) {
                 error_log("[Gemini] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
             // Analyze the response using original logic
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+
+            // DEBUG: Log the analysis result
+            error_log("[Gemini] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
 
             // ACTIVE COMPETITOR QUERYING for Gemini
             $analysis['competitorMentions'] = $this->queryCompetitorsGemini($url, $competitors, $kw, $daysLookback);
@@ -692,6 +716,9 @@ Output ONLY: YES or NO (nothing else).";
 
             $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
 
+            // DEBUG: Log the query being sent
+            error_log("[Claude] QUERY for keyword '$kw': $query");
+
             $payload = [
                 'model'      => $model,
                 'max_tokens' => 1200,
@@ -704,12 +731,18 @@ Output ONLY: YES or NO (nothing else).";
             try {
                 $resp = $this->curl_json($url, $headers, $payload);
                 $text = $resp['json']['content'][0]['text'] ?? '';
+
+                // DEBUG: Log the response received
+                error_log("[Claude] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
             } catch (Throwable $e) {
                 error_log("[Claude] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
             // Analyze the response using original logic
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+
+            // DEBUG: Log the analysis result
+            error_log("[Claude] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
 
             // ACTIVE COMPETITOR QUERYING for Claude
             $analysis['competitorMentions'] = $this->queryCompetitorsClaude($url, $model, $headers, $competitors, $kw, $daysLookback);
