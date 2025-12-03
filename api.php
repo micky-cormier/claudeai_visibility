@@ -272,6 +272,9 @@ class LLMAnalyzer
         if (!empty($this->keys['perplexity'])) $platforms[] = 'perplexity';
         if (!empty($this->keys['anthropic']))  $platforms[] = 'claude';
 
+        // DEBUG: Log which platforms will be queried
+        error_log("=== ANALYSIS START === Platforms to query: " . implode(', ', $platforms));
+
         $out = [
             'timestamp'       => date('c'),
             'website'         => $data['website'],
@@ -282,6 +285,7 @@ class LLMAnalyzer
         ];
 
         foreach ($platforms as $p) {
+            error_log("--- Starting query for platform: $p ---");
             try {
                 $method = 'q_' . $p;
                 $out['platformResults'][$p] = $this->$method(
@@ -291,8 +295,10 @@ class LLMAnalyzer
                     $data['keywords'],
                     $daysLookback
                 );
+                // DEBUG: Log the result summary
+                error_log("[$p] RESULT: mentions=" . $out['platformResults'][$p]['mentions'] . ", score=" . $out['platformResults'][$p]['score']);
             } catch (Throwable $e) {
-                error_log("[$p] " . $e->getMessage());
+                error_log("[$p] EXCEPTION: " . $e->getMessage());
                 $out['platformResults'][$p] = [
                     'platform'       => ucfirst($p),
                     'error'          => $e->getMessage(),
@@ -331,7 +337,6 @@ class LLMAnalyzer
         string $company,
         array $competitors,
         array $keywords,
-        callable $promptBuilder,
         int $daysLookback
     ): array {
         $results = [
@@ -343,10 +348,16 @@ class LLMAnalyzer
         ];
 
         foreach ($keywords as $kw) {
-            // Use original working prompt format
-            $query = "Tell me about $kw services. What companies and agencies provide these services? Include any providers you know about.";
-            // Build prompt for main query
-            $prompt = $promptBuilder($kw, $daysLookback);
+            // Broader, contextual query - mention the brands we care about
+            $targetDomain = $this->domain($website);
+            $compDomains  = array_filter(array_map([$this,'domain'], $competitors));
+            $allDomains   = array_merge([$targetDomain], $compDomains);
+            $domainList   = implode(', ', array_filter($allDomains));
+
+            $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
+
+            // DEBUG: Log the query being sent
+            error_log("[$platformName] QUERY for keyword '$kw': $query");
 
             $payload = $basePayload;
 
@@ -355,7 +366,7 @@ class LLMAnalyzer
                 $payload['messages'] = [
                     [
                         'role' => 'system',
-                        'content' => 'You are a knowledgeable assistant with expertise in business landscapes.'
+                        'content' => 'You are a knowledgeable assistant. Answer factually based on what you know.'
                     ],
                     [
                         'role' => 'user',
@@ -382,27 +393,18 @@ class LLMAnalyzer
                 if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
                     $text = $resp['json']['choices'][0]['message']['content'] ?? '';
                 }
+
+                // DEBUG: Log the response received
+                error_log("[$platformName] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
             } catch (Throwable $e) {
                 error_log("[$platformName] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
             // Analyze the response using original logic
-                    'role'    => 'user',
-                    'content' => $prompt
-                ]
-            ];
-
-            $resp = $this->curl_json($url, [
-                'Content-Type: application/json',
-                $authHeader
-            ], $payload);
-
-            $text = '';
-            if ($platformName === 'OpenAI' || $platformName === 'Perplexity') {
-                $text = $resp['json']['choices'][0]['message']['content'] ?? '';
-            }
-
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+
+            // DEBUG: Log the analysis result
+            error_log("[$platformName] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
 
             // ACTIVE COMPETITOR QUERYING: Query each competitor separately
             $analysis['competitorMentions'] = $this->queryCompetitors(
@@ -521,31 +523,6 @@ Output ONLY: YES or NO (nothing else).";
             'temperature'=> 0.1
         ];
 
-        $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
-            return "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Consider recent information from approximately the last {$days} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company Name — domain.com
-2. Company Name — domain.com
-";
-        };
-
         return $this->query_llm_list_style(
             'OpenAI',
             $url,
@@ -555,7 +532,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             $company,
             $competitors,
             $keywords,
-            $promptBuilder,
             $daysLookback
         );
     }
@@ -575,31 +551,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             'temperature'=> 0.1
         ];
 
-        $promptBuilder = function(string $kw, int $days) use ($targetDomain, $compList) {
-            return "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Use your search and knowledge capabilities to provide helpful, current recommendations from approximately the last {$days} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company — domain.com
-2. Company — domain.com
-";
-        };
-
         return $this->query_llm_list_style(
             'Perplexity',
             $url,
@@ -609,7 +560,6 @@ Provide your response ONLY in this format (no explanations or commentary):
             $company,
             $competitors,
             $keywords,
-            $promptBuilder,
             $daysLookback
         );
     }
@@ -632,8 +582,14 @@ Provide your response ONLY in this format (no explanations or commentary):
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // Use original working prompt format
-            $query = "Tell me about $kw services. What companies and agencies provide these services?";
+            // Broader, contextual query - mention the brands we care about
+            $allDomains = array_merge([$targetDomain], $compDomains);
+            $domainList = implode(', ', array_filter($allDomains));
+
+            $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
+
+            // DEBUG: Log the query being sent
+            error_log("[Gemini] QUERY for keyword '$kw': $query");
 
             $payload = [
                 'contents' => [[ 'parts' => [['text' => $query]] ]]
@@ -643,42 +599,18 @@ Provide your response ONLY in this format (no explanations or commentary):
             try {
                 $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
                 $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+                // DEBUG: Log the response received
+                error_log("[Gemini] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
             } catch (Throwable $e) {
                 error_log("[Gemini] Query failed for keyword '$kw': " . $e->getMessage());
             }
 
             // Analyze the response using original logic
-            $prompt = "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Consider recent information from approximately the last {$daysLookback} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company — domain.com
-2. Company — domain.com
-";
-
-            $payload = [
-                'contents' => [[ 'parts' => [['text' => $prompt]] ]]
-            ];
-
-            $resp = $this->curl_json($url, ['Content-Type: application/json'], $payload);
-            $text = $resp['json']['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+
+            // DEBUG: Log the analysis result
+            error_log("[Gemini] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
 
             // ACTIVE COMPETITOR QUERYING for Gemini
             $analysis['competitorMentions'] = $this->queryCompetitorsGemini($url, $competitors, $kw, $daysLookback);
@@ -757,13 +689,23 @@ Output ONLY: YES or NO (nothing else).";
     private function q_claude(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.anthropic.com/v1/messages';
-        $model = 'claude-3-5-sonnet-20241022';
+        $model = 'claude-3-5-sonnet-latest'; // Use latest version automatically
+
+        // DEBUG: Verify API key is present
+        $keyPresent = !empty($this->keys['anthropic']);
+        $keyPreview = $keyPresent ? substr($this->keys['anthropic'], 0, 10) . '...' : 'MISSING';
+        error_log("[Claude] API Key present: " . ($keyPresent ? 'YES' : 'NO') . ", starts with: $keyPreview");
 
         $headers = [
             'Content-Type: application/json',
             'x-api-key: ' . $this->keys['anthropic'],
             'anthropic-version: 2023-06-01'
         ];
+
+        // DEBUG: Log request configuration
+        error_log("[Claude] Request URL: $url");
+        error_log("[Claude] Model: $model");
+        error_log("[Claude] API Version header: 2023-06-01");
 
         $results = [
             'platform'       => 'Claude',
@@ -778,8 +720,14 @@ Output ONLY: YES or NO (nothing else).";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // Use original working prompt format
-            $query = "Tell me about $kw services. What companies and agencies provide these services?";
+            // Broader, contextual query - mention the brands we care about
+            $allDomains = array_merge([$targetDomain], $compDomains);
+            $domainList = implode(', ', array_filter($allDomains));
+
+            $query = "Tell me about '{$kw}'. Which of these businesses are relevant: {$domainList}? Also mention any other businesses you know about.";
+
+            // DEBUG: Log the query being sent
+            error_log("[Claude] QUERY for keyword '$kw': $query");
 
             $payload = [
                 'model'      => $model,
@@ -791,48 +739,27 @@ Output ONLY: YES or NO (nothing else).";
 
             $text = '';
             try {
+                // DEBUG: Log full request payload
+                error_log("[Claude] REQUEST PAYLOAD: " . json_encode($payload));
+
                 $resp = $this->curl_json($url, $headers, $payload);
                 $text = $resp['json']['content'][0]['text'] ?? '';
+
+                // DEBUG: Log the response received
+                error_log("[Claude] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
+
+                // DEBUG: Log full response structure
+                error_log("[Claude] RESPONSE STRUCTURE: " . json_encode(array_keys($resp['json'])));
             } catch (Throwable $e) {
                 error_log("[Claude] Query failed for keyword '$kw': " . $e->getMessage());
+                error_log("[Claude] FULL ERROR DETAILS: " . print_r($e, true));
             }
 
             // Analyze the response using original logic
-            $prompt = "
-A user is asking you: '{$kw}'
-
-Respond as you normally would to a real user query by recommending relevant businesses.
-Consider recent information from approximately the last {$daysLookback} days when available.
-
-Important Guidelines:
-- Provide helpful, accurate recommendations as you would to any user asking this question
-- For location-based queries (containing city, state, region names), recommend LOCAL businesses from that area
-- For general queries, recommend well-known, reputable businesses in that category
-- DO NOT invent or fabricate businesses that don't exist
-- Only recommend businesses you have reliable information about
-- It's acceptable to return 0-10 businesses
-
-Context for your awareness (don't let this bias your recommendations):
-User's domain: {$targetDomain}
-Competitor domains: {$compList}
-
-Provide your response ONLY in this format (no explanations or commentary):
-1. Company — domain.com
-2. Company — domain.com
-";
-
-            $payload = [
-                'model'      => $model,
-                'max_tokens' => 600,
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt]
-                ]
-            ];
-
-            $resp = $this->curl_json($url, $headers, $payload);
-            $text = $resp['json']['content'][0]['text'] ?? '';
-
             $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+
+            // DEBUG: Log the analysis result
+            error_log("[Claude] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
 
             // ACTIVE COMPETITOR QUERYING for Claude
             $analysis['competitorMentions'] = $this->queryCompetitorsClaude($url, $model, $headers, $competitors, $kw, $daysLookback);
