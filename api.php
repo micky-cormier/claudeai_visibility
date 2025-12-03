@@ -691,11 +691,21 @@ Output ONLY: YES or NO (nothing else).";
         $url   = 'https://api.anthropic.com/v1/messages';
         $model = 'claude-3-sonnet-20240229'; // Using base Claude 3 Sonnet (universally available)
 
+        // DEBUG: Verify API key is present
+        $keyPresent = !empty($this->keys['anthropic']);
+        $keyPreview = $keyPresent ? substr($this->keys['anthropic'], 0, 10) . '...' : 'MISSING';
+        error_log("[Claude] API Key present: " . ($keyPresent ? 'YES' : 'NO') . ", starts with: $keyPreview");
+
         $headers = [
             'Content-Type: application/json',
             'x-api-key: ' . $this->keys['anthropic'],
             'anthropic-version: 2023-06-01'
         ];
+
+        // DEBUG: Log request configuration
+        error_log("[Claude] Request URL: $url");
+        error_log("[Claude] Model: $model");
+        error_log("[Claude] API Version: 2023-06-01");
 
         $results = [
             'platform'       => 'Claude',
@@ -729,13 +739,20 @@ Output ONLY: YES or NO (nothing else).";
 
             $text = '';
             try {
+                // DEBUG: Log full request payload
+                error_log("[Claude] REQUEST PAYLOAD: " . json_encode($payload));
+
                 $resp = $this->curl_json($url, $headers, $payload);
                 $text = $resp['json']['content'][0]['text'] ?? '';
 
                 // DEBUG: Log the response received
                 error_log("[Claude] RESPONSE for keyword '$kw': " . substr($text, 0, 500) . (strlen($text) > 500 ? '...' : ''));
+
+                // DEBUG: Log full response structure
+                error_log("[Claude] RESPONSE STRUCTURE: " . json_encode(array_keys($resp['json'])));
             } catch (Throwable $e) {
                 error_log("[Claude] Query failed for keyword '$kw': " . $e->getMessage());
+                error_log("[Claude] FULL ERROR DETAILS: " . print_r($e, true));
             }
 
             // Analyze the response using original logic
