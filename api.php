@@ -689,7 +689,7 @@ Output ONLY: YES or NO (nothing else).";
     private function q_claude(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.anthropic.com/v1/messages';
-        $model = 'claude-3-5-sonnet-20241022';
+        $model = 'claude-3-5-sonnet-20240620'; // Using stable, widely-available model version
 
         $headers = [
             'Content-Type: application/json',
