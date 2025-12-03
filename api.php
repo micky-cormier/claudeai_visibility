@@ -401,7 +401,7 @@ class LLMAnalyzer
             }
 
             // Analyze the response using original logic
-            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+            $analysis = $this->analyzeListText($text, $website, $company, $competitors, $kw);
 
             // DEBUG: Log the analysis result
             error_log("[$platformName] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
@@ -607,7 +607,7 @@ Output ONLY: YES or NO (nothing else).";
             }
 
             // Analyze the response using original logic
-            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+            $analysis = $this->analyzeListText($text, $website, $company, $competitors, $kw);
 
             // DEBUG: Log the analysis result
             error_log("[Gemini] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
@@ -689,7 +689,7 @@ Output ONLY: YES or NO (nothing else).";
     private function q_claude(string $website, string $company, array $competitors, array $keywords, int $daysLookback): array
     {
         $url   = 'https://api.anthropic.com/v1/messages';
-        $model = 'claude-3-5-sonnet-latest'; // Use latest version automatically
+        $model = 'claude-3-5-haiku-20241022'; // Use latest version automatically
 
         // DEBUG: Verify API key is present
         $keyPresent = !empty($this->keys['anthropic']);
@@ -756,7 +756,7 @@ Output ONLY: YES or NO (nothing else).";
             }
 
             // Analyze the response using original logic
-            $analysis = $this->analyzeListText($text, $website, $company, $competitors);
+            $analysis = $this->analyzeListText($text, $website, $company, $competitors, $kw);
 
             // DEBUG: Log the analysis result
             error_log("[Claude] ANALYSIS for keyword '$kw': mentioned=" . ($analysis['mentioned'] ? 'YES' : 'NO') . ", position=" . ($analysis['position'] ?? 'none') . ", confidence=" . $analysis['confidence']);
@@ -839,7 +839,36 @@ Output ONLY: YES or NO (nothing else).";
         return $competitorResults;
     }
 
-    /* ---- HTTP helper ---- */
+/*--- relevance helper ---*/
+private function isPositiveContext(string $line): bool
+{
+    $lower = strtolower($line);
+
+    $positivePatterns = [
+        'related to',
+        'relates to',
+        'is associated with',
+        'is relevant to',
+        'connected to',
+        'pertains to',
+        'applies to',
+        'works with',
+        'specializes in',
+        'focuses on',
+        'provides',
+        'offers'
+    ];
+
+    foreach ($positivePatterns as $p) {
+        if (stripos($lower, $p) !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/* ---- HTTP helper ---- */
     private function curl_json(string $url, array $headers, array $payload): array
     {
         $ch = curl_init($url);
@@ -866,104 +895,161 @@ Output ONLY: YES or NO (nothing else).";
     }
 
     /* ---- analysis helpers ---- */
-    private function analyzeListText(string $content, string $website, string $company, array $competitors = []): array
-    {
-        // We expect lines like: "1. Company — domain.tld"
-        $result = [
-            'mentioned'          => false,
-            'position'           => null,
-            'competitorMentions' => [], // Will be populated by active querying
-            'responseLength'     => strlen($content),
-            'confidence'         => 0.2
-        ];
+private function analyzeListText(
+    string $content,
+    string $website,
+    string $company,
+    array $competitors = [],
+    string $keyword = ''
+): array {
+    $result = [
+        'mentioned'          => false,
+        'position'           => null,
+        'competitorMentions' => [],
+        'responseLength'     => strlen($content),
+        'confidence'         => 0.20
+    ];
 
-        $lines        = preg_split('/\r?\n/', trim($content));
-        $domain       = $this->domain($website);
-        $lowerCompany = strtolower($company);
+    if (trim($content) === '') {
+        return $result; // nothing to analyze
+    }
 
-        $pos = 0;
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '') continue;
-            $pos++;
+    $lines        = preg_split('/\r?\n/', trim($content));
+    $domain       = $this->domain($website);
+    $lowerKeyword = strtolower(trim($keyword));
+    $lowerCompany = strtolower(trim($company));
 
-            // Check for own domain
-            if ($domain && stripos($line, $domain) !== false) {
-                // CRITICAL: Check for negative context before marking as mentioned
-                if ($this->isNegativeContext($line, $domain)) {
-                    error_log("[ANALYSIS] Skipping '$domain' in negative context: " . substr($line, 0, 100));
-                    continue; // Skip this mention - it's in negative context
-                }
+    $pos = 0;
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '') continue;
+        $pos++;
 
+        $lowerLine = strtolower($line);
+
+        /* -----------------------------
+           1. Check for DOMAIN mentions
+           ----------------------------- */
+        if ($domain && stripos($lowerLine, $domain) !== false) {
+
+            // Skip if explicitly negative
+            if ($this->isNegativeContext($line, $domain)) {
+                continue;
+            }
+
+            // Must mention or imply the keyword in same context
+            $keywordInLine = ($lowerKeyword !== '' && stripos($lowerLine, $lowerKeyword) !== false);
+
+            if ($keywordInLine && $this->isPositiveContext($line)) {
                 $result['mentioned']  = true;
                 $result['position']   = $pos;
-                $result['confidence'] = 0.85;
+                $result['confidence'] = 0.95;
                 break;
             }
 
-            // Check for company name if domain not found
-            if ($lowerCompany && stripos(strtolower($line), $lowerCompany) !== false) {
-                // CRITICAL: Check for negative context before marking as mentioned
-                if ($this->isNegativeContext($line, $lowerCompany)) {
-                    error_log("[ANALYSIS] Skipping '$lowerCompany' in negative context: " . substr($line, 0, 100));
-                    continue; // Skip this mention - it's in negative context
-                }
-
-                $result['mentioned']  = true;
-                $result['position']   = $pos;
-                $result['confidence'] = 0.6;
-            }
+            // Neutral domain mention → skip
+            continue;
         }
 
-        // NOTE: competitorMentions will be populated by active querying methods
-        // (queryCompetitors, queryCompetitorsGemini, queryCompetitorsClaude)
-        // We no longer do passive competitor detection here
+        /* -----------------------------
+           2. Check COMPANY NAME fallback
+           ----------------------------- */
+        if ($lowerCompany && stripos($lowerLine, $lowerCompany) !== false) {
 
-        return $result;
+            if ($this->isNegativeContext($line, $lowerCompany)) {
+                continue;
+            }
+
+            // Must be keyword relevant
+            $keywordInLine = ($lowerKeyword !== '' && stripos($lowerLine, $lowerKeyword) !== false);
+
+            if ($keywordInLine && $this->isPositiveContext($line)) {
+                $result['mentioned']  = true;
+                $result['position']   = $pos;
+                $result['confidence'] = 0.70;
+                break;
+            }
+
+            continue;
+        }
     }
+
+    return $result;
+}
+
 
     /**
      * Check if a domain/company mention is in negative context
      * Returns true if the mention is in a negative/exclusionary statement
      */
-    private function isNegativeContext(string $line, string $term): bool
-    {
-        $lowerLine = strtolower($line);
+private function isNegativeContext(string $line, string $term): bool
+{
+    $lowerLine = strtolower($line);
+    $lowerTerm = strtolower($term);
 
-        // Negative phrases that indicate the business is NOT relevant
-        $negativePatterns = [
-            'none of the businesses',
-            'none of these',
-            'not directly related',
-            'are not related',
-            'aren\'t related',
-            'not associated',
-            'no direct connection',
-            'not relevant',
-            'don\'t appear to be',
-            'do not appear to be',
-            'not specifically',
-            'are not',
-            'aren\'t',
-            'not known for',
-            'don\'t specialize',
-            'do not specialize',
-            'however,',  // Often precedes a contradiction
-            'unfortunately,',  // Often precedes negative info
-        ];
+    // CRITICAL: Check for "none of" patterns that come BEFORE the domain list
+    // Example: "none of the businesses you mentioned—domain.com, domain2.com—are related"
+    $noneOfPatterns = [
+        'none of the businesses',
+        'none of the companies',
+        'none of these businesses',
+        'none of these companies',
+        'none of these',
+        'none are',
+        'none appear'
+    ];
 
-        foreach ($negativePatterns as $pattern) {
-            // Check if negative pattern appears before the term in the sentence
-            $patternPos = stripos($lowerLine, $pattern);
-            $termPos = stripos($lowerLine, strtolower($term));
+    foreach ($noneOfPatterns as $pattern) {
+        $patternPos = stripos($lowerLine, $pattern);
+        $termPos = stripos($lowerLine, $lowerTerm);
 
-            if ($patternPos !== false && $termPos !== false && $patternPos < $termPos) {
-                return true; // Negative context found before the term
-            }
+        if ($patternPos !== false && $termPos !== false && $patternPos < $termPos) {
+            error_log("[NEGATIVE] Detected 'none of' pattern before '$term': $pattern");
+            return true; // "none of" comes before the domain = negative context
         }
-
-        return false; // No negative context detected
     }
+
+    // If the model explicitly says it's NOT related to the keyword
+    // Example: "greenbananaseo.com ... is not directly related to pickles"
+    $negationPatterns = [
+        'is not directly related',
+        'not related',
+        'not directly related',
+        'not relevant',
+        'not associated',
+        'is not related',
+        'is not relevant',
+        'is not associated',
+        'not connected',
+        'not specifically related',
+        'not known for',
+        'does not specialize',
+        "isn't related",
+        "isn't relevant",
+        "aren't related",
+        "are not related",
+        "do not appear to be",
+        "does not appear to be",
+        "no direct connection",
+        "does not directly relate",
+        "no association",
+        "however,", // Contradiction indicator
+        "instead," // Redirection indicator
+    ];
+
+    foreach ($negationPatterns as $pattern) {
+        if (
+            stripos($lowerLine, $pattern) !== false &&
+            stripos($lowerLine, $lowerTerm) !== false &&
+            stripos($lowerLine, $pattern) < stripos($lowerLine, $lowerTerm)
+        ) {
+            error_log("[NEGATIVE] Detected negation pattern before '$term': $pattern");
+            return true;
+        }
+    }
+
+    return false;
+}
 
     private function domain(string $url): string
     {
