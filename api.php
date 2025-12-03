@@ -342,8 +342,8 @@ class LLMAnalyzer
         ];
 
         foreach ($keywords as $kw) {
-            // Use original working prompt format
-            $query = "Tell me about $kw services. What companies and agencies provide these services? Include any providers you know about.";
+            // Simple, direct query - pass keyword as-is
+            $query = $kw;
 
             $payload = $basePayload;
 
@@ -562,8 +562,8 @@ Output ONLY: YES or NO (nothing else).";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // Use original working prompt format
-            $query = "Tell me about $kw services. What companies and agencies provide these services?";
+            // Simple, direct query - pass keyword as-is
+            $query = $kw;
 
             $payload = [
                 'contents' => [[ 'parts' => [['text' => $query]] ]]
@@ -678,8 +678,8 @@ Output ONLY: YES or NO (nothing else).";
         $compList     = $compDomains ? implode(', ', $compDomains) : '(none provided)';
 
         foreach ($keywords as $kw) {
-            // Use original working prompt format
-            $query = "Tell me about $kw services. What companies and agencies provide these services?";
+            // Simple, direct query - pass keyword as-is
+            $query = $kw;
 
             $payload = [
                 'model'      => $model,
